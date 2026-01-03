@@ -1,0 +1,42 @@
+{
+  "name": "Shopping List",
+  "short_name": "Shopping",
+  "description": "Modern shopping list app for households",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["shopping", "lifestyle", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Einkaufsliste",
+      "short_name": "Liste",
+      "description": "Einkaufsliste öffnen",
+      "url": "/?view=to_buy",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Quick Buy",
+      "short_name": "Quick",
+      "description": "Quick Buy öffnen",
+      "url": "/?view=quick_buy",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}
