@@ -90,13 +90,27 @@
         <!-- Smart Input -->
         <section class="card p-6">
           <h3 class="text-lg font-semibold mb-4 dark:text-white">Was brauchst du?</h3>
-          <input
-            v-model="searchQuery"
-            @input="handleSearch"
-            type="text"
-            placeholder="Artikel suchen oder neu hinzufügen..."
-            class="input"
-          />
+          <div class="space-y-3">
+            <input
+              v-model="searchQuery"
+              @input="handleSearch"
+              type="text"
+              placeholder="Artikel suchen oder neu hinzufügen..."
+              class="input"
+            />
+
+            <!-- Category selector for new items -->
+            <div v-if="searchQuery.length > 0 && suggestions.length === 0" class="flex gap-2">
+              <select
+                v-model="selectedCategoryForNewItem"
+                class="input flex-1"
+              >
+                <option v-for="category in categories" :key="category.id" :value="category.id">
+                  {{ category.name }}
+                </option>
+              </select>
+            </div>
+          </div>
 
           <!-- Search suggestions -->
           <div v-if="suggestions.length > 0" class="mt-2 space-y-2">
@@ -123,7 +137,7 @@
           <button
             v-if="searchQuery.length > 0 && suggestions.length === 0"
             @click="addNewItem"
-            class="mt-2 w-full p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-left dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            class="mt-2 w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
           >
             ➕ "{{ searchQuery }}" als neuen Artikel hinzufügen
           </button>
@@ -141,32 +155,53 @@
               Keine Artikel auf der Liste
             </div>
 
-            <div v-else class="space-y-3">
-              <div
-                v-for="item in toBuyItems"
-                :key="item.id"
-                class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-between"
-              >
-                <div>
-                  <span class="dark:text-white">{{ item.name }}</span>
-                  <span v-if="item.quantity" class="text-sm text-gray-500 ml-2">{{ item.quantity }}</span>
-                  <span v-if="item.is_recurring" class="ml-2">🔄</span>
+            <div v-else class="space-y-4">
+              <!-- Group by category -->
+              <div v-for="(items, categoryName) in groupedToBuyItems" :key="categoryName" class="space-y-2">
+                <div class="flex items-center gap-2 mb-2">
+                  <div
+                    class="w-3 h-3 rounded-full"
+                    :style="{ backgroundColor: getCategoryColor(categoryName) }"
+                  ></div>
+                  <h4 class="font-semibold text-sm text-gray-700 dark:text-gray-300">
+                    {{ categoryName }} ({{ items.length }})
+                  </h4>
                 </div>
-                <div class="flex gap-2">
-                  <button
-                    @click="checkItem(item)"
-                    class="text-green-500 hover:text-green-600"
-                    title="Abhaken"
-                  >
-                    ✓
-                  </button>
-                  <button
-                    @click="deleteItem(item)"
-                    class="text-red-500 hover:text-red-600"
-                    title="Löschen"
-                  >
-                    🗑️
-                  </button>
+
+                <div
+                  v-for="item in items"
+                  :key="item.id"
+                  class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-between border-l-4"
+                  :style="{ borderColor: getCategoryColor(categoryName) }"
+                >
+                  <div class="flex-1 cursor-pointer" @click="openEditModal(item)">
+                    <span class="dark:text-white">{{ item.name }}</span>
+                    <span v-if="item.quantity" class="text-sm text-gray-500 ml-2">{{ item.quantity }}</span>
+                    <span v-if="item.is_recurring" class="ml-2">🔄</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <button
+                      @click="openEditModal(item)"
+                      class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      title="Bearbeiten"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      @click="checkItem(item)"
+                      class="text-green-500 hover:text-green-600"
+                      title="Abhaken"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      @click="deleteItem(item)"
+                      class="text-red-500 hover:text-red-600"
+                      title="Löschen"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -182,31 +217,123 @@
               Noch keine Artikel im Inventar
             </div>
 
-            <div v-else class="space-y-3 max-h-96 overflow-y-auto">
-              <div
-                v-for="item in inventoryItems"
-                :key="item.id"
-                class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-between"
-              >
-                <div>
-                  <span class="dark:text-white">{{ item.name }}</span>
-                  <span v-if="item.recurring_schedule" class="ml-2 text-sm text-gray-500">
-                    🔄 {{ item.recurring_schedule.description }}
-                  </span>
+            <div v-else class="space-y-4 max-h-96 overflow-y-auto">
+              <!-- Group by category -->
+              <div v-for="(items, categoryName) in groupedInventoryItems" :key="categoryName" class="space-y-2">
+                <div class="flex items-center gap-2 mb-2">
+                  <div
+                    class="w-3 h-3 rounded-full"
+                    :style="{ backgroundColor: getCategoryColor(categoryName) }"
+                  ></div>
+                  <h4 class="font-semibold text-sm text-gray-700 dark:text-gray-300">
+                    {{ categoryName }} ({{ items.length }})
+                  </h4>
                 </div>
-                <button
-                  @click="moveToList(item)"
-                  class="text-blue-500 hover:text-blue-600"
-                  title="Zur Liste"
+
+                <div
+                  v-for="item in items"
+                  :key="item.id"
+                  class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-between border-l-4"
+                  :style="{ borderColor: getCategoryColor(categoryName) }"
                 >
-                  →
-                </button>
+                  <div class="flex-1 cursor-pointer" @click="openEditModal(item)">
+                    <span class="dark:text-white">{{ item.name }}</span>
+                    <span v-if="item.recurring_schedule" class="ml-2 text-sm text-gray-500">
+                      🔄 {{ item.recurring_schedule.description }}
+                    </span>
+                  </div>
+                  <div class="flex gap-2">
+                    <button
+                      @click="openEditModal(item)"
+                      class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      title="Bearbeiten"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      @click="moveToList(item)"
+                      class="text-blue-500 hover:text-blue-600"
+                      title="Zur Liste"
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
         </div>
       </div>
     </main>
+
+    <!-- Edit Item Modal -->
+    <div
+      v-if="editingItem"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click="closeEditModal"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4"
+        @click.stop
+      >
+        <h3 class="text-xl font-semibold mb-4 dark:text-white">Artikel bearbeiten</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Name
+            </label>
+            <input
+              v-model="editForm.name"
+              type="text"
+              class="input w-full"
+              placeholder="Artikelname"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Menge (optional)
+            </label>
+            <input
+              v-model="editForm.quantity"
+              type="text"
+              class="input w-full"
+              placeholder="z.B. 500g, 2 Stück"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Kategorie
+            </label>
+            <select
+              v-model="editForm.category_id"
+              class="input w-full"
+            >
+              <option v-for="category in categories" :key="category.id" :value="category.id">
+                {{ category.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button
+            @click="saveEdit"
+            class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 font-semibold"
+          >
+            Speichern
+          </button>
+          <button
+            @click="closeEditModal"
+            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white py-2 px-4 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700"
+          >
+            Abbrechen
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Toast Notifications -->
     <div class="fixed top-20 right-4 z-50 space-y-2">
@@ -251,14 +378,88 @@ const { isOnline, pendingCount, syncPendingActions } = useOfflineSync();
 const searchQuery = ref('');
 const quickBuyInput = ref('');
 const suggestions = ref([]);
+const selectedCategoryForNewItem = ref(null);
+const editingItem = ref(null);
+const editForm = ref({
+  name: '',
+  quantity: '',
+  category_id: null,
+});
 
 const quickBuyItems = computed(() => itemsStore.quickBuyItems);
 const toBuyItems = computed(() => itemsStore.toBuyItems);
 const inventoryItems = computed(() => itemsStore.inventoryItems);
 
+// Group items by category
+const groupedToBuyItems = computed(() => {
+  const grouped = {};
+  toBuyItems.value.forEach(item => {
+    const categoryName = item.category?.name || 'Sonstiges';
+    if (!grouped[categoryName]) {
+      grouped[categoryName] = [];
+    }
+    grouped[categoryName].push(item);
+  });
+  return grouped;
+});
+
+const groupedInventoryItems = computed(() => {
+  const grouped = {};
+  inventoryItems.value.forEach(item => {
+    const categoryName = item.category?.name || 'Sonstiges';
+    if (!grouped[categoryName]) {
+      grouped[categoryName] = [];
+    }
+    grouped[categoryName].push(item);
+  });
+  return grouped;
+});
+
 onMounted(() => {
   itemsStore.fetchItems();
+  // Set default category to "other"
+  const defaultCategory = props.categories.find(c => c.slug === 'other') || props.categories[0];
+  selectedCategoryForNewItem.value = defaultCategory?.id;
 });
+
+// Helper function to get category color
+const getCategoryColor = (categoryName) => {
+  const category = props.categories.find(c => c.name === categoryName);
+  return category?.color || '#9E9E9E';
+};
+
+// Edit modal functions
+const openEditModal = (item) => {
+  editingItem.value = item;
+  editForm.value = {
+    name: item.name,
+    quantity: item.quantity || '',
+    category_id: item.category?.id || selectedCategoryForNewItem.value,
+  };
+};
+
+const closeEditModal = () => {
+  editingItem.value = null;
+  editForm.value = {
+    name: '',
+    quantity: '',
+    category_id: null,
+  };
+};
+
+const saveEdit = async () => {
+  try {
+    await itemsStore.updateItem(editingItem.value.id, {
+      name: editForm.value.name,
+      quantity: editForm.value.quantity || null,
+      category_id: editForm.value.category_id,
+    });
+    success(`"${editForm.value.name}" aktualisiert`);
+    closeEditModal();
+  } catch (err) {
+    error('Fehler beim Aktualisieren');
+  }
+};
 
 let searchTimeout = null;
 const handleSearch = async () => {
@@ -317,13 +518,11 @@ const addNewItem = async () => {
       return;
     }
 
-    // Find 'other' category or use first available category as fallback
-    const categoryId = props.categories.find(c => c.slug === 'other')?.id || props.categories[0]?.id;
-
+    // Use selected category
     await itemsStore.createItem({
       name: searchQuery.value,
       list_type: 'to_buy',
-      category_id: categoryId,
+      category_id: selectedCategoryForNewItem.value,
     });
     success(`"${searchQuery.value}" hinzugefügt`);
     searchQuery.value = '';
