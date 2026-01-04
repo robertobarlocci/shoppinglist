@@ -146,14 +146,46 @@ class ItemController extends Controller
             return response()->json(['message' => 'Recurring item completed']);
         }
 
-        $item->moveTo($toList);
+        DB::beginTransaction();
 
-        // Log activity
-        if ($toList === Item::LIST_TYPE_INVENTORY) {
-            $this->activityLogger->itemChecked($item, auth()->user());
+        try {
+            // Check for duplicates when moving to inventory
+            if ($toList === Item::LIST_TYPE_INVENTORY) {
+                $existingItem = Item::where('list_type', Item::LIST_TYPE_INVENTORY)
+                    ->whereRaw('LOWER(name) = ?', [strtolower($item->name)])
+                    ->where('id', '!=', $item->id)
+                    ->first();
+
+                if ($existingItem) {
+                    // Duplicate found - delete the item being moved and return existing
+                    $itemName = $item->name;
+                    $item->forceDelete();
+                    $this->activityLogger->itemChecked($existingItem, auth()->user());
+
+                    DB::commit();
+
+                    return response()->json([
+                        'message' => "'{$itemName}' bereits im Inventar vorhanden",
+                        'data' => new ItemResource($existingItem->fresh(['category', 'creator', 'recurringSchedule'])),
+                        'deduplication' => true,
+                    ]);
+                }
+            }
+
+            $item->moveTo($toList);
+
+            // Log activity
+            if ($toList === Item::LIST_TYPE_INVENTORY) {
+                $this->activityLogger->itemChecked($item, auth()->user());
+            }
+
+            DB::commit();
+
+            return new ItemResource($item->fresh(['category', 'creator']));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        return new ItemResource($item->fresh(['category', 'creator']));
     }
 
     /**

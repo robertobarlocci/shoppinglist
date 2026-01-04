@@ -577,8 +577,12 @@ const moveToList = async (item) => {
 
 const checkItem = async (item) => {
   try {
-    await itemsStore.moveItem(item.id, 'inventory');
-    success(`"${item.name}" abgehakt`);
+    const result = await itemsStore.moveItem(item.id, 'inventory');
+    if (result.deduplication) {
+      success(result.message);
+    } else {
+      success(`"${item.name}" abgehakt`);
+    }
   } catch (err) {
     error('Fehler beim Abhaken');
   }

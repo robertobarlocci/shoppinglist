@@ -106,8 +106,20 @@ export const useItemsStore = defineStore('items', () => {
         try {
             const response = await axios.post(`/api/items/${id}/move`, { to_list: toList });
             const index = items.value.findIndex(item => item.id === id);
+
             if (index !== -1) {
-                if (response.data.data) {
+                if (response.data.deduplication) {
+                    // Item was a duplicate - remove it and update/add the existing item
+                    items.value.splice(index, 1);
+
+                    // Update or add the existing item
+                    const existingIndex = items.value.findIndex(item => item.id === response.data.data.id);
+                    if (existingIndex !== -1) {
+                        items.value[existingIndex] = response.data.data;
+                    } else {
+                        items.value.push(response.data.data);
+                    }
+                } else if (response.data.data) {
                     items.value[index] = response.data.data;
                 } else {
                     // Item was deleted (recurring item checked)
