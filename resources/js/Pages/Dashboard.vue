@@ -4,13 +4,26 @@
     <header class="bg-white dark:bg-[var(--bg-secondary)] shadow-sm sticky top-0 z-10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center justify-between">
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            🛒 Chnubber-Shop
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+            🛒 Shop
           </h1>
 
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2 sm:gap-4">
+            <!-- Quick Buy Toggle -->
+            <button
+              @click="toggleQuickBuy"
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 relative"
+              :class="{ 'bg-orange-100 dark:bg-orange-900': showQuickBuy }"
+              title="Quick Buy"
+            >
+              <span class="text-lg">🔥</span>
+              <span v-if="quickBuyItems.length > 0" class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {{ quickBuyItems.length }}
+              </span>
+            </button>
+
             <!-- Offline indicator -->
-            <div v-if="!isOnline" class="text-yellow-500 text-sm">
+            <div v-if="!isOnline" class="text-yellow-500 text-sm hidden sm:block">
               ⚠️ Offline
             </div>
 
@@ -18,7 +31,7 @@
             <button
               v-if="pendingCount > 0"
               @click="syncNow"
-              class="text-sm text-blue-500 hover:text-blue-600"
+              class="text-sm text-blue-500 hover:text-blue-600 hidden sm:block"
             >
               🔄 {{ pendingCount }} ausstehend
             </button>
@@ -40,12 +53,12 @@
               >
                 {{ $page.props.auth.user.name.charAt(0) }}
               </div>
-              <a href="/profile" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <a href="/profile" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hidden sm:inline">
                 Einstellungen
               </a>
-              <span class="text-gray-300 dark:text-gray-600">|</span>
+              <span class="text-gray-300 dark:text-gray-600 hidden sm:inline">|</span>
               <form @submit.prevent="logout" class="inline">
-                <button type="submit" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                <button type="submit" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hidden sm:inline">
                   Abmelden
                 </button>
               </form>
@@ -59,9 +72,20 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="space-y-6">
         <!-- Quick Buy Section -->
-        <section class="card p-6 bg-quick-buy text-white">
-          <h2 class="text-xl font-bold mb-4">🔥 Quick Buy</h2>
-          <p class="text-sm opacity-90 mb-4">Schnelle Kiosk-Einkäufe</p>
+        <section v-if="showQuickBuy" class="card p-6 bg-quick-buy text-white">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-xl font-bold">🔥 Quick Buy</h2>
+              <p class="text-sm opacity-90">Schnelle Kiosk-Einkäufe</p>
+            </div>
+            <button
+              @click="toggleQuickBuy"
+              class="text-white/80 hover:text-white p-2"
+              title="Schließen"
+            >
+              ✕
+            </button>
+          </div>
 
           <div class="mt-4">
             <input
@@ -385,6 +409,7 @@ const editForm = ref({
   quantity: '',
   category_id: null,
 });
+const showQuickBuy = ref(false);
 
 const quickBuyItems = computed(() => itemsStore.quickBuyItems);
 const toBuyItems = computed(() => itemsStore.toBuyItems);
@@ -426,6 +451,11 @@ onMounted(() => {
 const getCategoryColor = (categoryName) => {
   const category = props.categories.find(c => c.name === categoryName);
   return category?.color || '#9E9E9E';
+};
+
+// Toggle Quick Buy visibility
+const toggleQuickBuy = () => {
+  showQuickBuy.value = !showQuickBuy.value;
 };
 
 // Edit modal functions
