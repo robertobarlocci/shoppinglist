@@ -274,6 +274,7 @@
                 </span>
               </span>
               <button
+                v-if="isParent"
                 @click="removeIngredient(ingredient.id)"
                 class="text-red-500 hover:text-red-600 text-sm"
               >
@@ -285,8 +286,8 @@
             Keine Zutaten hinzugefügt
           </div>
 
-          <!-- Add ingredient form -->
-          <form @submit.prevent="addIngredient" class="space-y-2">
+          <!-- Add ingredient form (parents only) -->
+          <form v-if="isParent" @submit.prevent="addIngredient" class="space-y-2">
             <div class="grid grid-cols-3 gap-2">
               <input
                 v-model="newIngredientName"
@@ -326,8 +327,9 @@
           </form>
         </div>
 
-        <!-- Delete meal button -->
+        <!-- Delete meal button (parents only) -->
         <button
+          v-if="isParent"
           @click="deleteMeal"
           class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
         >
