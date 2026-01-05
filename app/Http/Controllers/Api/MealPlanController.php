@@ -24,6 +24,8 @@ class MealPlanController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', MealPlan::class);
+
         $validated = $request->validate([
             'start_date' => 'nullable|date',
         ]);
@@ -54,6 +56,8 @@ class MealPlanController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', MealPlan::class);
+
         $validated = $request->validate([
             'date' => 'required|date',
             'meal_type' => 'required|in:breakfast,lunch,dinner',
@@ -101,6 +105,8 @@ class MealPlanController extends Controller
      */
     public function update(Request $request, MealPlan $mealPlan)
     {
+        $this->authorize('update', $mealPlan);
+
         // Meals are shared between all users
         $validated = $request->validate([
             'date' => 'sometimes|required|date',
@@ -118,6 +124,8 @@ class MealPlanController extends Controller
      */
     public function destroy(MealPlan $mealPlan)
     {
+        $this->authorize('delete', $mealPlan);
+
         // Meals are shared between all users
         $mealPlan->delete();
 
@@ -129,6 +137,8 @@ class MealPlanController extends Controller
      */
     public function addIngredient(Request $request, MealPlan $mealPlan)
     {
+        $this->authorize('update', $mealPlan);
+
         // Meals are shared between all users
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -149,6 +159,8 @@ class MealPlanController extends Controller
      */
     public function removeIngredient(MealPlan $mealPlan, MealPlanIngredient $ingredient)
     {
+        $this->authorize('update', $mealPlan);
+
         // Ensure ingredient belongs to this meal plan
         if ($ingredient->meal_plan_id !== $mealPlan->id) {
             abort(403, 'Unauthorized');
@@ -164,6 +176,8 @@ class MealPlanController extends Controller
      */
     public function addIngredientsToShoppingList(MealPlan $mealPlan)
     {
+        $this->authorize('update', $mealPlan);
+
         // Meals are shared between all users
         DB::beginTransaction();
 
