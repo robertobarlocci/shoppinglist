@@ -648,6 +648,16 @@ const syncNow = async () => {
 };
 
 const logout = () => {
-  router.post('/logout');
+  router.post('/logout', {}, {
+    onSuccess: () => {
+      // Clear service worker caches to prevent stale content
+      if (window.clearServiceWorkerCaches) {
+        window.clearServiceWorkerCaches();
+      }
+      // Force full page reload to get fresh CSRF token
+      // SPA navigation would keep the stale token in the meta tag
+      window.location.href = '/login';
+    },
+  });
 };
 </script>

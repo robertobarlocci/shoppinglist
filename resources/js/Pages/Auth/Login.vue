@@ -75,7 +75,7 @@ const form = useForm({
 
 const submit = () => {
   form.post('/login', {
-    onFinish: () => form.reset('password'),
+    onError: () => form.reset('password'),
   });
 };
 </script>

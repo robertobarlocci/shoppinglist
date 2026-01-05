@@ -35,9 +35,23 @@
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                     navigator.serviceWorker.register('/sw.js')
-                        .then(reg => console.log('Service Worker registered:', reg))
+                        .then(reg => {
+                            console.log('Service Worker registered:', reg);
+                            
+                            // Check for updates periodically
+                            setInterval(() => {
+                                reg.update();
+                            }, 60 * 60 * 1000); // Check every hour
+                        })
                         .catch(err => console.log('Service Worker registration failed:', err));
                 });
+                
+                // Expose function to clear SW caches (useful for logout)
+                window.clearServiceWorkerCaches = function() {
+                    if (navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHES' });
+                    }
+                };
             }
         </script>
     </body>
