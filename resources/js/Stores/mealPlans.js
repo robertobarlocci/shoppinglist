@@ -53,12 +53,26 @@ export const useMealPlansStore = defineStore('mealPlans', () => {
         }
     };
 
-    // Create a new meal plan
+    // Create a new meal plan (or update if one already exists for the same date/meal_type)
     const createMealPlan = async (mealPlanData) => {
         try {
             const response = await axios.post('/api/meal-plans', mealPlanData);
-            mealPlans.value.push(response.data.data);
-            return response.data.data;
+            const newMeal = response.data.data;
+
+            // Check if a meal already exists for this date/meal_type in local state
+            const existingIndex = mealPlans.value.findIndex(
+                plan => plan.date === newMeal.date && plan.meal_type === newMeal.meal_type
+            );
+
+            if (existingIndex !== -1) {
+                // Update existing meal
+                mealPlans.value[existingIndex] = newMeal;
+            } else {
+                // Add new meal
+                mealPlans.value.push(newMeal);
+            }
+
+            return newMeal;
         } catch (err) {
             error.value = err.message;
             throw err;

@@ -35,8 +35,8 @@ class MealPlanController extends Controller
 
         $endDate = $startDate->copy()->endOfWeek();
 
+        // All users share the same meal plans
         $mealPlans = MealPlan::with('ingredients.item')
-            ->where('user_id', auth()->id())
             ->whereBetween('date', [$startDate, $endDate])
             ->orderBy('date')
             ->orderByRaw("CASE
@@ -50,7 +50,7 @@ class MealPlanController extends Controller
     }
 
     /**
-     * Store a newly created meal plan.
+     * Store a newly created meal plan (or update if exists for same date/meal_type).
      */
     public function store(Request $request)
     {
@@ -63,12 +63,17 @@ class MealPlanController extends Controller
         DB::beginTransaction();
 
         try {
-            $mealPlan = MealPlan::create([
-                'user_id' => auth()->id(),
-                'date' => $validated['date'],
-                'meal_type' => $validated['meal_type'],
-                'title' => $validated['title'],
-            ]);
+            // Use updateOrCreate to prevent duplicates for same date/meal_type (meals are shared)
+            $mealPlan = MealPlan::updateOrCreate(
+                [
+                    'date' => $validated['date'],
+                    'meal_type' => $validated['meal_type'],
+                ],
+                [
+                    'user_id' => auth()->id(),
+                    'title' => $validated['title'],
+                ]
+            );
 
             // Log activity
             $this->activityLogger->mealPlanCreated($mealPlan, auth()->user());
@@ -87,11 +92,7 @@ class MealPlanController extends Controller
      */
     public function show(MealPlan $mealPlan)
     {
-        // Ensure user owns this meal plan
-        if ($mealPlan->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
-        }
-
+        // Meals are shared between all users
         return new MealPlanResource($mealPlan->load('ingredients.item'));
     }
 
@@ -100,11 +101,7 @@ class MealPlanController extends Controller
      */
     public function update(Request $request, MealPlan $mealPlan)
     {
-        // Ensure user owns this meal plan
-        if ($mealPlan->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
-        }
-
+        // Meals are shared between all users
         $validated = $request->validate([
             'date' => 'sometimes|required|date',
             'meal_type' => 'sometimes|required|in:breakfast,lunch,dinner',
@@ -121,11 +118,7 @@ class MealPlanController extends Controller
      */
     public function destroy(MealPlan $mealPlan)
     {
-        // Ensure user owns this meal plan
-        if ($mealPlan->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
-        }
-
+        // Meals are shared between all users
         $mealPlan->delete();
 
         return response()->json(['message' => 'Meal plan deleted']);
@@ -136,11 +129,7 @@ class MealPlanController extends Controller
      */
     public function addIngredient(Request $request, MealPlan $mealPlan)
     {
-        // Ensure user owns this meal plan
-        if ($mealPlan->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
-        }
-
+        // Meals are shared between all users
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'quantity' => 'nullable|string|max:100',
@@ -160,11 +149,6 @@ class MealPlanController extends Controller
      */
     public function removeIngredient(MealPlan $mealPlan, MealPlanIngredient $ingredient)
     {
-        // Ensure user owns this meal plan
-        if ($mealPlan->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
-        }
-
         // Ensure ingredient belongs to this meal plan
         if ($ingredient->meal_plan_id !== $mealPlan->id) {
             abort(403, 'Unauthorized');
@@ -180,11 +164,7 @@ class MealPlanController extends Controller
      */
     public function addIngredientsToShoppingList(MealPlan $mealPlan)
     {
-        // Ensure user owns this meal plan
-        if ($mealPlan->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
-        }
-
+        // Meals are shared between all users
         DB::beginTransaction();
 
         try {
@@ -235,6 +215,7 @@ class MealPlanController extends Controller
 
     /**
      * Get meal title suggestions for autocomplete.
+     * Searches all meals (shared between all users).
      */
     public function suggestMeals(Request $request)
     {
@@ -244,9 +225,8 @@ class MealPlanController extends Controller
             return response()->json([]);
         }
 
-        // Get distinct meal titles that match the query
-        $meals = MealPlan::where('user_id', auth()->id())
-            ->where('title', 'ILIKE', "%{$query}%")
+        // Get distinct meal titles that match the query (all meals are shared)
+        $meals = MealPlan::where('title', 'ILIKE', "%{$query}%")
             ->select('title')
             ->groupBy('title')
             ->orderByRaw('COUNT(*) DESC') // Most frequently used first
@@ -259,12 +239,12 @@ class MealPlanController extends Controller
 
     /**
      * Get all unique meals for the meals library.
+     * All meals are shared between all users.
      */
     public function getMealsLibrary()
     {
-        // Get distinct meals with metadata
-        $meals = MealPlan::where('user_id', auth()->id())
-            ->select('title', DB::raw('COUNT(*) as usage_count'), DB::raw('MAX(created_at) as last_used'))
+        // Get distinct meals with metadata (all meals are shared)
+        $meals = MealPlan::select('title', DB::raw('COUNT(*) as usage_count'), DB::raw('MAX(created_at) as last_used'))
             ->groupBy('title')
             ->orderBy('last_used', 'desc')
             ->get()

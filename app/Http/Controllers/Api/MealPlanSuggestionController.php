@@ -19,7 +19,9 @@ class MealPlanSuggestionController extends Controller
     ) {}
 
     /**
-     * Get suggestions for a specific week (parents see all kids' suggestions, kids see their own).
+     * Get suggestions for a specific week.
+     * Parents see all kids' suggestions (shared).
+     * Kids see only their own suggestions.
      */
     public function index(Request $request)
     {
@@ -35,18 +37,14 @@ class MealPlanSuggestionController extends Controller
 
         $user = auth()->user();
 
-        // Parents see all suggestions from their kids
-        // Kids see only their own suggestions
         $query = MealPlanSuggestion::with(['user', 'approver'])
             ->whereBetween('date', [$startDate, $endDate]);
 
         if ($user->isKid()) {
+            // Kids see only their own suggestions
             $query->where('user_id', $user->id);
-        } else {
-            // Parents see suggestions from all their children
-            $childrenIds = $user->children()->pluck('id');
-            $query->whereIn('user_id', $childrenIds);
         }
+        // Parents see ALL kids' suggestions (shared system)
 
         $suggestions = $query->orderBy('date')
             ->orderByRaw("CASE
@@ -105,23 +103,18 @@ class MealPlanSuggestionController extends Controller
         $user = auth()->user();
 
         // Kids can only see their own suggestions
-        // Parents can see suggestions from their kids
         if ($user->isKid() && $suggestion->user_id !== $user->id) {
             abort(403, 'Unauthorized');
         }
 
-        if ($user->isParent()) {
-            $childrenIds = $user->children()->pluck('id');
-            if (!$childrenIds->contains($suggestion->user_id)) {
-                abort(403, 'Unauthorized');
-            }
-        }
-
+        // Parents can see any kid's suggestion (shared system)
         return new MealPlanSuggestionResource($suggestion->load(['user', 'approver']));
     }
 
     /**
-     * Delete a suggestion (kids can delete their own pending suggestions).
+     * Delete a suggestion.
+     * Kids can delete their own pending suggestions.
+     * Parents can delete any kid's suggestion.
      */
     public function destroy(MealPlanSuggestion $suggestion)
     {
@@ -132,13 +125,8 @@ class MealPlanSuggestionController extends Controller
             if ($suggestion->user_id !== $user->id || !$suggestion->isPending()) {
                 abort(403, 'Unauthorized');
             }
-        } else {
-            // Parents can delete any suggestion from their kids
-            $childrenIds = $user->children()->pluck('id');
-            if (!$childrenIds->contains($suggestion->user_id)) {
-                abort(403, 'Unauthorized');
-            }
         }
+        // Parents can delete any suggestion (shared system)
 
         $suggestion->delete();
 
@@ -146,7 +134,7 @@ class MealPlanSuggestionController extends Controller
     }
 
     /**
-     * Approve a suggestion and create a meal plan (parents only).
+     * Approve a suggestion and create/update a meal plan (parents only).
      */
     public function approve(Request $request, MealPlanSuggestion $suggestion)
     {
@@ -157,12 +145,6 @@ class MealPlanSuggestionController extends Controller
             return response()->json(['message' => 'Only parents can approve suggestions'], 403);
         }
 
-        // Verify this suggestion is from one of their kids
-        $childrenIds = $user->children()->pluck('id');
-        if (!$childrenIds->contains($suggestion->user_id)) {
-            abort(403, 'Unauthorized');
-        }
-
         // Can only approve pending suggestions
         if (!$suggestion->isPending()) {
             return response()->json(['message' => 'Suggestion is not pending'], 400);
@@ -171,13 +153,17 @@ class MealPlanSuggestionController extends Controller
         DB::beginTransaction();
 
         try {
-            // Create the actual meal plan
-            $mealPlan = MealPlan::create([
-                'user_id' => $user->id, // Parent creates the meal plan
-                'date' => $suggestion->date,
-                'meal_type' => $suggestion->meal_type,
-                'title' => $suggestion->title,
-            ]);
+            // Create or update the meal plan (shared - one per date/meal_type)
+            $mealPlan = MealPlan::updateOrCreate(
+                [
+                    'date' => $suggestion->date,
+                    'meal_type' => $suggestion->meal_type,
+                ],
+                [
+                    'user_id' => $user->id,
+                    'title' => $suggestion->title,
+                ]
+            );
 
             // Update suggestion status
             $suggestion->update([
@@ -213,12 +199,6 @@ class MealPlanSuggestionController extends Controller
         // Only parents can reject suggestions
         if (!$user->isParent()) {
             return response()->json(['message' => 'Only parents can reject suggestions'], 403);
-        }
-
-        // Verify this suggestion is from one of their kids
-        $childrenIds = $user->children()->pluck('id');
-        if (!$childrenIds->contains($suggestion->user_id)) {
-            abort(403, 'Unauthorized');
         }
 
         // Can only reject pending suggestions
