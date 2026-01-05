@@ -30,6 +30,8 @@ class RestrictKidsAccess
                 'api/meal-plans',
                 'api/meal-suggestions',
                 'logout',
+                'login',
+                'sanctum/csrf-cookie',
             ];
 
             // Check if current path is allowed
@@ -43,7 +45,7 @@ class RestrictKidsAccess
 
             // If not allowed, redirect kids to meal planner
             if (!$isAllowed) {
-                if ($request->expectsJson()) {
+                if ($request->expectsJson() || !$request->isMethod('GET')) {
                     return response()->json(['message' => 'Access forbidden for kids accounts'], 403);
                 }
                 return redirect('/meal-planner');
