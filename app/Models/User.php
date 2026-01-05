@@ -63,6 +63,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the meal plans created by this user.
+     */
+    public function mealPlans(): HasMany
+    {
+        return $this->hasMany(MealPlan::class);
+    }
+
+    /**
      * Generate a random avatar color for new users.
      */
     public static function generateAvatarColor(): string

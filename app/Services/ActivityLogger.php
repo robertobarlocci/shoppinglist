@@ -156,4 +156,22 @@ class ActivityLogger
             subjectName: $user->name
         );
     }
+
+    /**
+     * Log meal plan created activity.
+     */
+    public function mealPlanCreated($mealPlan, User $user): Activity
+    {
+        return $this->log(
+            action: Activity::ACTION_MEAL_PLAN_CREATED,
+            user: $user,
+            subjectType: 'MealPlan',
+            subjectId: $mealPlan->id,
+            subjectName: $mealPlan->title,
+            metadata: [
+                'date' => $mealPlan->date->format('Y-m-d'),
+                'meal_type' => $mealPlan->meal_type,
+            ]
+        );
+    }
 }

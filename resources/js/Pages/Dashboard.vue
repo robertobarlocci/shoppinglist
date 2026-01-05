@@ -22,6 +22,15 @@
               </span>
             </button>
 
+            <!-- Meal Planner -->
+            <Link
+              href="/meal-planner"
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Essensplaner"
+            >
+              <span class="text-lg">📅</span>
+            </Link>
+
             <!-- Offline indicator -->
             <div v-if="!isOnline" class="text-yellow-500 text-sm hidden sm:block">
               ⚠️ Offline
@@ -384,7 +393,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, Link } from '@inertiajs/vue3';
 import { useItemsStore } from '../Stores/items';
 import { useToast } from '../Composables/useToast';
 import { useTheme } from '../Composables/useTheme';

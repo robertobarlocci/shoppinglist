@@ -56,6 +56,7 @@ class Activity extends Model
     const ACTION_RECURRING_TRIGGERED = 'recurring_triggered';
     const ACTION_CATEGORY_CREATED = 'category_created';
     const ACTION_USER_LOGIN = 'user_login';
+    const ACTION_MEAL_PLAN_CREATED = 'meal_plan_created';
 
     /**
      * Get the user who performed the activity.
@@ -80,6 +81,7 @@ class Activity extends Model
             self::ACTION_RECURRING_TRIGGERED => '🔄',
             self::ACTION_CATEGORY_CREATED => '🏷️',
             self::ACTION_USER_LOGIN => '👤',
+            self::ACTION_MEAL_PLAN_CREATED => '📅',
             default => '📋',
         };
     }
@@ -101,6 +103,7 @@ class Activity extends Model
             self::ACTION_RECURRING_TRIGGERED => "Wiederkehrende Artikel automatisch hinzugefügt",
             self::ACTION_CATEGORY_CREATED => "{$userName} hat die Kategorie \"{$this->subject_name}\" erstellt",
             self::ACTION_USER_LOGIN => "{$userName} hat sich eingeloggt",
+            self::ACTION_MEAL_PLAN_CREATED => "{$userName} hat \"{$this->subject_name}\" zum Essensplan hinzugefügt",
             default => $this->action,
         };
     }

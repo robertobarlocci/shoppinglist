@@ -29,4 +29,12 @@ class DashboardController extends Controller
             }),
         ]);
     }
+
+    /**
+     * Display the meal planner.
+     */
+    public function mealPlanner()
+    {
+        return Inertia::render('MealPlanner');
+    }
 }
