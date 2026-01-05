@@ -23,6 +23,7 @@ class DemoDataSeeder extends Seeder
             'email' => 'fritz@example.com',
             'password' => Hash::make('password'),
             'avatar_color' => '#4ECDC4',
+            'role' => User::ROLE_PARENT,
         ]);
 
         $vreni = User::create([
@@ -30,6 +31,8 @@ class DemoDataSeeder extends Seeder
             'email' => 'vreni@example.com',
             'password' => Hash::make('password'),
             'avatar_color' => '#FF6B6B',
+            'role' => User::ROLE_KID,
+            'parent_id' => $fritz->id,
         ]);
 
         // Get categories
