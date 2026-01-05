@@ -41,10 +41,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Log activity
-        $this->activityLogger->userLogin(Auth::user());
+        $user = Auth::user();
 
-        return redirect()->intended(route('dashboard'));
+        // Log activity
+        $this->activityLogger->userLogin($user);
+
+        // Redirect kids to meal planner, parents to dashboard
+        $redirectRoute = $user->isKid() ? route('meal-planner') : route('dashboard');
+
+        return redirect()->intended($redirectRoute);
     }
 
     /**

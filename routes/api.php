@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\MealPlanController;
+use App\Http\Controllers\Api\MealPlanSuggestionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +53,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/meal-plans/{mealPlan}/ingredients', [MealPlanController::class, 'addIngredient']);
     Route::delete('/meal-plans/{mealPlan}/ingredients/{ingredient}', [MealPlanController::class, 'removeIngredient']);
     Route::post('/meal-plans/{mealPlan}/add-to-shopping-list', [MealPlanController::class, 'addIngredientsToShoppingList']);
+
+    // Meal Plan Suggestions (Kids feature)
+    Route::get('/meal-suggestions', [MealPlanSuggestionController::class, 'index']);
+    Route::post('/meal-suggestions', [MealPlanSuggestionController::class, 'store']);
+    Route::get('/meal-suggestions/{suggestion}', [MealPlanSuggestionController::class, 'show']);
+    Route::delete('/meal-suggestions/{suggestion}', [MealPlanSuggestionController::class, 'destroy']);
+    Route::post('/meal-suggestions/{suggestion}/approve', [MealPlanSuggestionController::class, 'approve']);
+    Route::post('/meal-suggestions/{suggestion}/reject', [MealPlanSuggestionController::class, 'reject']);
 
     // Activities
     Route::get('/activities', [ActivityController::class, 'index']);
