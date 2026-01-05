@@ -9,7 +9,7 @@
               ←
             </Link>
             <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-              📅 Essensplaner
+              📅 Meals
             </h1>
           </div>
 
