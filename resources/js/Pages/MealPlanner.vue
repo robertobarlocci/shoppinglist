@@ -92,6 +92,12 @@
                 @add-meal="openAddMealModal"
                 @click-meal="openMealDetails"
               />
+              <SuggestionsCard
+                :suggestions="getSuggestions(day.date, 'breakfast')"
+                :isParent="isParent"
+                @approve="approveSuggestion"
+                @reject="rejectSuggestion"
+              />
             </div>
 
             <!-- Lunch -->
@@ -105,6 +111,12 @@
                 mealType="lunch"
                 @add-meal="openAddMealModal"
                 @click-meal="openMealDetails"
+              />
+              <SuggestionsCard
+                :suggestions="getSuggestions(day.date, 'lunch')"
+                :isParent="isParent"
+                @approve="approveSuggestion"
+                @reject="rejectSuggestion"
               />
             </div>
 
@@ -120,20 +132,56 @@
                 @add-meal="openAddMealModal"
                 @click-meal="openMealDetails"
               />
+              <SuggestionsCard
+                :suggestions="getSuggestions(day.date, 'dinner')"
+                :isParent="isParent"
+                @approve="approveSuggestion"
+                @reject="rejectSuggestion"
+              />
             </div>
           </div>
         </div>
       </div>
     </main>
 
-    <!-- Add meal modal -->
+    <!-- Add meal modal (different for kids and parents) -->
     <div v-if="showAddMealModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-[var(--bg-secondary)] rounded-lg max-w-md w-full p-6">
+      <div class="bg-white dark:bg-[var(--bg-secondary)] rounded-lg max-w-md w-full p-6 max-h-[80vh] overflow-y-auto">
         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
-          Mahlzeit hinzufügen
+          {{ isKid ? 'Mahlzeit vorschlagen' : 'Mahlzeit hinzufügen' }}
         </h2>
 
-        <form @submit.prevent="addMeal">
+        <!-- Kids: Select from meals library -->
+        <div v-if="isKid">
+          <div v-if="mealsLibrary.length > 0" class="space-y-2 mb-4">
+            <button
+              v-for="(meal, index) in mealsLibrary"
+              :key="index"
+              @click="selectMealFromLibrary(meal.title)"
+              class="w-full text-left p-3 bg-gray-50 dark:bg-[var(--bg-primary)] hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <div class="font-medium text-gray-900 dark:text-white">
+                {{ meal.title }}
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {{ meal.usage_count }}x verwendet
+              </div>
+            </button>
+          </div>
+          <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+            Noch keine Mahlzeiten gespeichert
+          </div>
+
+          <button
+            @click="closeAddMealModal"
+            class="w-full bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-900 dark:text-white px-4 py-2 rounded-lg"
+          >
+            Abbrechen
+          </button>
+        </div>
+
+        <!-- Parents: Input field with autocomplete -->
+        <form v-else @submit.prevent="addMeal">
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -348,17 +396,26 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { useMealPlansStore } from '../Stores/mealPlans';
+import { useSuggestionsStore } from '../Stores/suggestions';
 import { useItemsStore } from '../Stores/items';
 import { useTheme } from '../Composables/useTheme';
 import { useToast } from '../Composables/useToast';
 import MealCard from '../Components/MealCard.vue';
+import SuggestionsCard from '../Components/SuggestionsCard.vue';
 
 const mealPlansStore = useMealPlansStore();
+const suggestionsStore = useSuggestionsStore();
 const itemsStore = useItemsStore();
 const { isDark, toggleTheme } = useTheme();
 const { toasts, success, error: showError } = useToast();
+
+// Get current user from Inertia page props
+const page = usePage();
+const currentUser = computed(() => page.props.auth.user);
+const isKid = computed(() => currentUser.value?.role === 'kid');
+const isParent = computed(() => currentUser.value?.role === 'parent');
 
 // Week navigation
 const currentWeekStart = ref(getMonday(new Date()));
@@ -438,6 +495,10 @@ function getMeal(date, mealType) {
   return mealPlansStore.getMealPlan(date, mealType);
 }
 
+function getSuggestions(date, mealType) {
+  return suggestionsStore.getSuggestionsFor(date, mealType);
+}
+
 // Week navigation
 function previousWeek() {
   const newStart = new Date(currentWeekStart.value);
@@ -454,17 +515,64 @@ function nextWeek() {
 }
 
 // Add meal
-function openAddMealModal(date, mealType) {
+async function openAddMealModal(date, mealType) {
   addMealDate.value = date;
   addMealType.value = mealType;
   newMealTitle.value = '';
   showAddMealModal.value = true;
+
+  // Load meals library for kids
+  if (isKid.value) {
+    try {
+      mealsLibrary.value = await mealPlansStore.fetchMealsLibrary();
+    } catch (err) {
+      showError('Fehler beim Laden der Mahlzeiten');
+    }
+  }
 }
 
 function closeAddMealModal() {
   showAddMealModal.value = false;
   newMealTitle.value = '';
   mealSuggestions.value = [];
+}
+
+// Kids: Select meal from library and create suggestion
+async function selectMealFromLibrary(mealTitle) {
+  try {
+    await suggestionsStore.createSuggestion({
+      date: addMealDate.value,
+      meal_type: addMealType.value,
+      title: mealTitle,
+    });
+
+    success('Vorschlag erstellt');
+    closeAddMealModal();
+  } catch (err) {
+    showError('Fehler beim Erstellen des Vorschlags');
+  }
+}
+
+// Suggestions management
+async function approveSuggestion(suggestionId) {
+  try {
+    const result = await suggestionsStore.approveSuggestion(suggestionId);
+    success('Vorschlag genehmigt');
+
+    // Refresh meal plans to show the newly created meal
+    await loadMealPlans();
+  } catch (err) {
+    showError('Fehler beim Genehmigen des Vorschlags');
+  }
+}
+
+async function rejectSuggestion(suggestionId) {
+  try {
+    await suggestionsStore.rejectSuggestion(suggestionId);
+    success('Vorschlag abgelehnt');
+  } catch (err) {
+    showError('Fehler beim Ablehnen des Vorschlags');
+  }
 }
 
 async function handleMealSearch() {
@@ -613,9 +721,10 @@ function formatDate(dateString) {
   return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-// Load meal plans
+// Load meal plans and suggestions
 async function loadMealPlans() {
   await mealPlansStore.fetchMealPlans(formatDateForAPI(currentWeekStart.value));
+  await suggestionsStore.fetchSuggestions(formatDateForAPI(currentWeekStart.value));
 }
 
 onMounted(() => {
