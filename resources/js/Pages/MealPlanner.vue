@@ -33,6 +33,15 @@
               </button>
             </div>
 
+            <!-- Meals Library -->
+            <button
+              @click="openMealsLibraryModal"
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Meine Mahlzeiten"
+            >
+              <span class="text-lg">📖</span>
+            </button>
+
             <!-- Theme toggle -->
             <button
               @click="toggleTheme"
@@ -136,7 +145,21 @@
                 required
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[var(--bg-primary)] text-gray-900 dark:text-white"
                 placeholder="z.B. Spaghetti Bolognese"
+                @input="handleMealSearch"
               />
+
+              <!-- Autocomplete suggestions -->
+              <div v-if="mealSuggestions.length > 0" class="mt-2 bg-white dark:bg-[var(--bg-primary)] border border-gray-300 dark:border-gray-600 rounded-lg max-h-40 overflow-y-auto">
+                <button
+                  v-for="(suggestion, index) in mealSuggestions"
+                  :key="index"
+                  type="button"
+                  @click="selectMealSuggestion(suggestion)"
+                  class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                >
+                  {{ suggestion }}
+                </button>
+              </div>
             </div>
 
             <div class="flex gap-2">
@@ -265,6 +288,46 @@
       </div>
     </div>
 
+    <!-- Meals Library modal -->
+    <div v-if="showMealsLibraryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-[var(--bg-secondary)] rounded-lg max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+            Meine Mahlzeiten
+          </h2>
+          <button
+            @click="closeMealsLibraryModal"
+            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Meals list -->
+        <div v-if="mealsLibrary.length > 0" class="space-y-2">
+          <div
+            v-for="(meal, index) in mealsLibrary"
+            :key="index"
+            class="p-3 bg-gray-50 dark:bg-[var(--bg-primary)] rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <h3 class="font-medium text-gray-900 dark:text-white">
+                  {{ meal.title }}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {{ meal.usage_count }}x verwendet · Zuletzt: {{ formatDate(meal.last_used) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+          Noch keine Mahlzeiten gespeichert
+        </div>
+      </div>
+    </div>
+
     <!-- Toast notifications -->
     <div class="fixed bottom-4 right-4 space-y-2 z-50">
       <div
@@ -331,10 +394,16 @@ const showAddMealModal = ref(false);
 const newMealTitle = ref('');
 const addMealDate = ref('');
 const addMealType = ref('');
+const mealSuggestions = ref([]);
+let mealSearchTimeout = null;
 
 // Meal details modal
 const showMealDetailsModal = ref(false);
 const selectedMeal = ref(null);
+
+// Meals library modal
+const showMealsLibraryModal = ref(false);
+const mealsLibrary = ref([]);
 
 // Ingredient form
 const newIngredientName = ref('');
@@ -395,6 +464,28 @@ function openAddMealModal(date, mealType) {
 function closeAddMealModal() {
   showAddMealModal.value = false;
   newMealTitle.value = '';
+  mealSuggestions.value = [];
+}
+
+async function handleMealSearch() {
+  if (newMealTitle.value.length < 2) {
+    mealSuggestions.value = [];
+    return;
+  }
+
+  clearTimeout(mealSearchTimeout);
+  mealSearchTimeout = setTimeout(async () => {
+    try {
+      mealSuggestions.value = await mealPlansStore.searchMeals(newMealTitle.value);
+    } catch (err) {
+      console.error('Error searching meals:', err);
+    }
+  }, 300);
+}
+
+function selectMealSuggestion(suggestion) {
+  newMealTitle.value = suggestion;
+  mealSuggestions.value = [];
 }
 
 async function addMeal() {
@@ -501,6 +592,25 @@ async function addAllToShoppingList() {
   } catch (err) {
     showError('Fehler beim Hinzufügen zur Einkaufsliste');
   }
+}
+
+// Meals library
+async function openMealsLibraryModal() {
+  try {
+    mealsLibrary.value = await mealPlansStore.fetchMealsLibrary();
+    showMealsLibraryModal.value = true;
+  } catch (err) {
+    showError('Fehler beim Laden der Mahlzeiten');
+  }
+}
+
+function closeMealsLibraryModal() {
+  showMealsLibraryModal.value = false;
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 // Load meal plans

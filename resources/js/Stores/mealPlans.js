@@ -152,6 +152,34 @@ export const useMealPlansStore = defineStore('mealPlans', () => {
         }
     };
 
+    // Search for meal titles (autocomplete)
+    const searchMeals = async (query) => {
+        if (query.length < 2) {
+            return [];
+        }
+
+        try {
+            const response = await axios.get('/api/meal-plans/suggest', {
+                params: { q: query }
+            });
+            return response.data || [];
+        } catch (err) {
+            console.error('Error searching meals:', err);
+            return [];
+        }
+    };
+
+    // Get all unique meals (meals library)
+    const fetchMealsLibrary = async () => {
+        try {
+            const response = await axios.get('/api/meal-plans/library');
+            return response.data || [];
+        } catch (err) {
+            error.value = err.message;
+            throw err;
+        }
+    };
+
     return {
         mealPlans,
         loading,
@@ -167,5 +195,7 @@ export const useMealPlansStore = defineStore('mealPlans', () => {
         addIngredient,
         removeIngredient,
         addIngredientsToShoppingList,
+        searchMeals,
+        fetchMealsLibrary,
     };
 });

@@ -232,4 +232,50 @@ class MealPlanController extends Controller
             throw $e;
         }
     }
+
+    /**
+     * Get meal title suggestions for autocomplete.
+     */
+    public function suggestMeals(Request $request)
+    {
+        $query = $request->query('q');
+
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        // Get distinct meal titles that match the query
+        $meals = MealPlan::where('user_id', auth()->id())
+            ->where('title', 'ILIKE', "%{$query}%")
+            ->select('title')
+            ->groupBy('title')
+            ->orderByRaw('COUNT(*) DESC') // Most frequently used first
+            ->limit(10)
+            ->get()
+            ->pluck('title');
+
+        return response()->json($meals);
+    }
+
+    /**
+     * Get all unique meals for the meals library.
+     */
+    public function getMealsLibrary()
+    {
+        // Get distinct meals with metadata
+        $meals = MealPlan::where('user_id', auth()->id())
+            ->select('title', DB::raw('COUNT(*) as usage_count'), DB::raw('MAX(created_at) as last_used'))
+            ->groupBy('title')
+            ->orderBy('last_used', 'desc')
+            ->get()
+            ->map(function ($meal) {
+                return [
+                    'title' => $meal->title,
+                    'usage_count' => $meal->usage_count,
+                    'last_used' => $meal->last_used,
+                ];
+            });
+
+        return response()->json($meals);
+    }
 }

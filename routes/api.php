@@ -42,6 +42,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Meal Plans
     Route::get('/meal-plans', [MealPlanController::class, 'index']);
     Route::post('/meal-plans', [MealPlanController::class, 'store']);
+    Route::get('/meal-plans/suggest', [MealPlanController::class, 'suggestMeals']);
+    Route::get('/meal-plans/library', [MealPlanController::class, 'getMealsLibrary']);
     Route::get('/meal-plans/{mealPlan}', [MealPlanController::class, 'show']);
     Route::put('/meal-plans/{mealPlan}', [MealPlanController::class, 'update']);
     Route::delete('/meal-plans/{mealPlan}', [MealPlanController::class, 'destroy']);
