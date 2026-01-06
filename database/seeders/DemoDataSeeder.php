@@ -35,6 +35,15 @@ class DemoDataSeeder extends Seeder
             'parent_id' => $fritz->id,
         ]);
 
+        $ruedi = User::create([
+            'name' => 'Ruedi',
+            'email' => 'ruedi@example.com',
+            'password' => Hash::make('password'),
+            'avatar_color' => '#95E1D3',
+            'role' => User::ROLE_KID,
+            'parent_id' => $fritz->id,
+        ]);
+
         // Get categories
         $dairy = Category::where('slug', 'dairy')->first();
         $bakery = Category::where('slug', 'bakery')->first();
