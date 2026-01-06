@@ -88,7 +88,7 @@
           </div>
 
           <!-- Meal slots -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <!-- Breakfast -->
             <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
               <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -123,6 +123,26 @@
               />
               <SuggestionsCard
                 :suggestions="getSuggestions(day.date, 'lunch')"
+                :isParent="isParent"
+                @approve="approveSuggestion"
+                @reject="rejectSuggestion"
+              />
+            </div>
+
+            <!-- Zvieri -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Zvieri
+              </h3>
+              <MealCard
+                :meal="getMeal(day.date, 'zvieri')"
+                :date="day.date"
+                mealType="zvieri"
+                @add-meal="openAddMealModal"
+                @click-meal="openMealDetails"
+              />
+              <SuggestionsCard
+                :suggestions="getSuggestions(day.date, 'zvieri')"
                 :isParent="isParent"
                 @approve="approveSuggestion"
                 @reject="rejectSuggestion"

@@ -44,7 +44,8 @@ class MealPlanController extends Controller
             ->orderByRaw("CASE
                 WHEN meal_type = 'breakfast' THEN 1
                 WHEN meal_type = 'lunch' THEN 2
-                WHEN meal_type = 'dinner' THEN 3
+                WHEN meal_type = 'zvieri' THEN 3
+                WHEN meal_type = 'dinner' THEN 4
                 END")
             ->get();
 
@@ -60,7 +61,7 @@ class MealPlanController extends Controller
 
         $validated = $request->validate([
             'date' => 'required|date',
-            'meal_type' => 'required|in:breakfast,lunch,dinner',
+            'meal_type' => 'required|in:breakfast,lunch,zvieri,dinner',
             'title' => 'required|string|max:255',
         ]);
 
@@ -110,7 +111,7 @@ class MealPlanController extends Controller
         // Meals are shared between all users
         $validated = $request->validate([
             'date' => 'sometimes|required|date',
-            'meal_type' => 'sometimes|required|in:breakfast,lunch,dinner',
+            'meal_type' => 'sometimes|required|in:breakfast,lunch,zvieri,dinner',
             'title' => 'sometimes|required|string|max:255',
         ]);
 
