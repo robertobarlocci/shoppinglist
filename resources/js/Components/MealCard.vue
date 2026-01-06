@@ -50,7 +50,7 @@ defineProps({
   mealType: {
     type: String,
     required: true,
-    validator: (value) => ['breakfast', 'lunch', 'dinner'].includes(value),
+    validator: (value) => ['breakfast', 'lunch', 'zvieri', 'dinner'].includes(value),
   },
 });
 
