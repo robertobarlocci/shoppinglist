@@ -13,7 +13,7 @@
 
 ## 📖 About
 
-**Shopping List** is a collaborative shopping list application designed for households. Multiple users share the same list, see activity updates from other users, and enjoy a smooth PWA experience with offline support.
+**Shopping List** is a comprehensive family organization app designed for households. It combines shopping list management, meal planning, and lunchbox organization in one unified PWA with role-based access for parents and kids.
 
 ### ✨ Key Features
 
@@ -23,7 +23,11 @@
 | ⚡ **Quick Buy Mode** | Rapid entry for spontaneous purchases (kiosk runs, corner shop) |
 | 📦 **Inventory Tracking** | Keep track of what you have at home |
 | 🔄 **Recurring Items** | Automatically add items to your list on selected weekdays |
-| 👥 **Multi-User** | Shared lists for the whole household |
+| 🍽️ **Meal Planner** | Weekly meal planning with 4 meal types (Frühstück, Mittagessen, Zvieri, Abendessen) |
+| 🥗 **Ingredient Management** | Add meal ingredients with autocomplete and bulk-add to shopping list |
+| 🍱 **Lunchbox Requests** | Kids can request items for their daily lunchbox, parents view all requests |
+| 👨‍👩‍👧‍👦 **Family Roles** | Parent and Kid accounts with role-based permissions and meal suggestions |
+| 👥 **Multi-User** | Shared lists, meals, and activities for the whole household |
 | 📊 **Activity Feed** | See who added, checked off, or deleted items (polling-based) |
 | 📱 **PWA** | Installable app with offline support |
 | 🌙 **Dark/Light Mode** | Dark mode by default, toggle in settings |
@@ -58,9 +62,16 @@ shoppinglist/
 │   │   │   │   ├── ActivityController.php
 │   │   │   │   ├── CategoryController.php
 │   │   │   │   ├── ItemController.php
+│   │   │   │   ├── LunchboxController.php
+│   │   │   │   ├── MealPlanController.php
 │   │   │   │   └── SyncController.php
-│   │   │   └── Auth/             # Authentication controllers
+│   │   │   ├── Auth/             # Authentication controllers
+│   │   │   └── DashboardController.php
 │   │   ├── Middleware/           # Custom middleware
+│   │   │   └── RestrictKidsAccess.php
+│   │   ├── Policies/             # Authorization policies
+│   │   │   ├── LunchboxItemPolicy.php
+│   │   │   └── MealPlanPolicy.php
 │   │   └── Resources/            # API Resource transformers
 │   ├── Jobs/
 │   │   └── CheckRecurringItems.php   # Scheduled job
@@ -68,6 +79,10 @@ shoppinglist/
 │   │   ├── Activity.php
 │   │   ├── Category.php
 │   │   ├── Item.php
+│   │   ├── LunchboxItem.php
+│   │   ├── MealPlan.php
+│   │   ├── MealPlanIngredient.php
+│   │   ├── MealPlanSuggestion.php
 │   │   ├── RecurringSchedule.php
 │   │   └── User.php
 │   ├── Providers/
@@ -91,16 +106,24 @@ shoppinglist/
 │   ├── css/                      # Tailwind CSS
 │   ├── js/
 │   │   ├── Components/           # Vue components
+│   │   │   ├── LunchboxCard.vue
+│   │   │   ├── MealCard.vue
+│   │   │   └── SuggestionsCard.vue
 │   │   ├── Composables/          # Vue composables (hooks)
 │   │   │   ├── useOfflineSync.js
 │   │   │   ├── useSwipe.js
 │   │   │   ├── useTheme.js
 │   │   │   └── useToast.js
 │   │   ├── Pages/                # Inertia page components
+│   │   │   ├── Dashboard.vue
+│   │   │   ├── LunchboxView.vue
+│   │   │   └── MealPlanner.vue
 │   │   └── Stores/               # Pinia stores
 │   │       ├── activities.js
 │   │       ├── categories.js
-│   │       └── items.js
+│   │       ├── items.js
+│   │       ├── lunchbox.js
+│   │       └── mealPlans.js
 │   └── views/                    # Blade templates
 ├── routes/
 │   ├── api.php                   # API routes
@@ -166,10 +189,11 @@ npm run dev      # Development with hot reload
 
 ### Demo Credentials
 
-| User | Email | Password |
-|------|-------|----------|
-| Fritz | `fritz@example.com` | `password` |
-| Vreni | `vreni@example.com` | `password` |
+| User | Role | Email | Password | Notes |
+|------|------|-------|----------|-------|
+| Fritz | Parent | `fritz@example.com` | `password` | Full access to all features |
+| Vreni | Kid | `vreni@example.com` | `password` | Child of Fritz, can suggest meals |
+| Ruedi | Kid | `ruedi@example.com` | `password` | Child of Fritz, can suggest meals |
 
 ---
 
@@ -252,26 +276,58 @@ php artisan test --coverage
 ### Entity Relationship
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌───────────────────┐
-│   users     │────<│   items     │────<│ recurring_schedules│
-└─────────────┘     └─────────────┘     └───────────────────┘
-      │                   │
-      │                   │
-      ▼                   ▼
-┌─────────────┐     ┌─────────────┐
-│ activities  │     │ categories  │
-└─────────────┘     └─────────────┘
+                    ┌─────────────────────────┐
+                    │        users            │
+                    │  (role, parent_id)      │
+                    └─────────────────────────┘
+                      │  │  │  │  │  │  │
+        ┌─────────────┘  │  │  │  │  │  └────────────────────┐
+        │                │  │  │  │  └───────────────┐        │
+        ▼                │  │  │  └──────────┐       │        │
+┌──────────────┐         │  │  │             │       │        │
+│  activities  │         │  │  │             │       │        │
+└──────────────┘         │  │  │             │       │        │
+                         │  │  │             ▼       ▼        ▼
+                         │  │  │      ┌──────────┐ ┌──────────────┐ ┌──────────────────┐
+                         │  │  │      │meal_plans│ │lunchbox_items│ │meal_plan_suggestions│
+                         │  │  │      └──────────┘ └──────────────┘ └──────────────────┘
+                         │  │  │            │
+                         │  │  │            ▼
+                         │  │  │      ┌──────────────────────┐
+                         │  │  │      │meal_plan_ingredients │
+                         │  │  │      └──────────────────────┘
+                         │  │  │            │
+                         ▼  ▼  ▼            ▼
+                    ┌─────────────┐   ┌─────────────┐
+                    │   items     │──<│ categories  │
+                    └─────────────┘   └─────────────┘
+                         │
+                         ▼
+                    ┌───────────────────┐
+                    │recurring_schedules│
+                    └───────────────────┘
 ```
 
 ### Tables Overview
 
 | Table | Description |
 |-------|-------------|
-| `users` | User accounts with avatar colors |
+| `users` | User accounts with roles (parent/kid), parent_id, and avatar colors |
 | `items` | Shopping items with list_type (quick_buy, to_buy, inventory, trash) |
 | `categories` | 11 default + custom categories |
-| `recurring_schedules` | Weekly recurring patterns |
+| `recurring_schedules` | Weekly recurring patterns for inventory items |
 | `activities` | Activity log for all actions |
+| `meal_plans` | Meal planning with date, meal_type, and title |
+| `meal_plan_ingredients` | Ingredients for each meal with optional shopping list link |
+| `meal_plan_suggestions` | Kids' meal suggestions awaiting parent approval |
+| `lunchbox_items` | Daily lunchbox requests from kids |
+
+### User Roles
+
+| Role | Access | Capabilities |
+|------|--------|--------------|
+| `parent` | Full access | Manage shopping lists, create meals, view kids' lunchbox requests, approve/reject meal suggestions |
+| `kid` | Restricted | View meal planner, suggest meals, manage own lunchbox requests |
 
 ### Item List Types
 
@@ -281,6 +337,102 @@ php artisan test --coverage
 | `to_buy` | Regular shopping list |
 | `inventory` | Items at home |
 | `trash` | Soft-deleted items |
+
+### Meal Types
+
+| Type | German Name | Order |
+|------|-------------|-------|
+| `breakfast` | Frühstück | 1 |
+| `lunch` | Mittagessen | 2 |
+| `zvieri` | Zvieri | 3 |
+| `dinner` | Abendessen | 4 |
+
+---
+
+## 👨‍👩‍👧‍👦 Family Features
+
+### 🍽️ Meal Planner
+
+The meal planner provides a comprehensive weekly view for organizing family meals.
+
+**Features:**
+- **Week View:** Navigate through weeks (Monday-Sunday) with calendar controls
+- **4 Meal Types:** Breakfast (Frühstück), Lunch (Mittagessen), Zvieri, Dinner (Abendessen)
+- **Meal Management:** Create, edit, and delete meals with autocomplete from your meal library
+- **Ingredient Tracking:** Add ingredients with quantities and link to shopping list items
+- **Autocomplete Suggestions:** Smart suggestions based on previously used meal titles
+- **Shopping List Integration:** Bulk-add all meal ingredients to your shopping list with one click
+- **Shared Planning:** All family members see the same meal plan
+
+**Parent Capabilities:**
+- Create and edit meals directly
+- Add/remove ingredients
+- Delete meals
+- Approve or reject kids' meal suggestions
+
+**Kid Capabilities:**
+- View the weekly meal plan
+- Suggest meals for any day/meal type (pending parent approval)
+- Cannot directly create or modify meals
+
+**Meal Suggestions Workflow:**
+1. Kid suggests a meal for a specific date and meal type
+2. Suggestion appears in parent's view with approve/reject options
+3. Parent approves → meal is created automatically
+4. Parent rejects → suggestion is removed
+
+### 🍱 Lunchbox
+
+The lunchbox feature allows kids to request items for their daily school lunches, giving parents visibility into what their children want.
+
+**Features:**
+- **Daily Requests:** Kids add items they want for each weekday's lunchbox
+- **Autocomplete:** Smart suggestions from all family members' previous requests
+- **Week Navigation:** Browse and plan ahead for the entire week
+- **Parent Overview:** Parents see all children's lunchbox requests in one view
+- **Simple Interface:** Fast, free-form input without complex meal structures
+
+**Kid Capabilities:**
+- Add items to their own lunchbox for any date
+- Delete their own lunchbox items
+- Cannot see or modify siblings' items
+
+**Parent Capabilities:**
+- View all children's lunchbox requests (read-only)
+- See which child requested which items
+- Cannot add or delete lunchbox items
+
+**Use Cases:**
+- Kids plan their own lunches
+- Parents shop based on actual requests
+- Reduce food waste by knowing preferences
+- Teach kids meal planning skills
+
+### 🔒 Role-Based Access
+
+The app implements a parent-child role system with appropriate permissions.
+
+**Parent Role:**
+- Full access to shopping lists (create, edit, delete, move items)
+- Full access to inventory management
+- Create and manage meals directly
+- View all children's lunchbox requests
+- Approve/reject meal suggestions from kids
+- Access to all app features
+
+**Kid Role:**
+- View shopping lists (read-only)
+- View meal planner (read-only)
+- Suggest meals (pending parent approval)
+- Manage own lunchbox requests
+- Cannot access dashboard or admin features
+- Restricted to specific routes via middleware
+
+**Technical Implementation:**
+- `RestrictKidsAccess` middleware blocks kids from unauthorized routes
+- Policy-based authorization (MealPlanPolicy, LunchboxItemPolicy)
+- Parent-child relationships in database (`parent_id` column)
+- Scoped queries ensure kids only see/modify their own data
 
 ---
 
@@ -326,6 +478,40 @@ All API routes require authentication via Laravel Sanctum.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/sync` | Sync offline actions |
+
+### Meal Plans
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/meal-plans` | List meal plans (filter by `?start_date=`) |
+| `POST` | `/api/meal-plans` | Create or update meal plan |
+| `GET` | `/api/meal-plans/{id}` | Get single meal plan with ingredients |
+| `PUT` | `/api/meal-plans/{id}` | Update meal plan |
+| `DELETE` | `/api/meal-plans/{id}` | Delete meal plan |
+| `GET` | `/api/meal-plans/suggest?q=` | Autocomplete meal title suggestions |
+| `GET` | `/api/meal-plans/library` | Get all unique meals with usage counts |
+| `POST` | `/api/meal-plans/{id}/ingredients` | Add ingredient to meal |
+| `DELETE` | `/api/meal-plans/{id}/ingredients/{ingredientId}` | Remove ingredient |
+| `POST` | `/api/meal-plans/{id}/add-to-shopping-list` | Bulk-add ingredients to shopping list |
+
+### Meal Plan Suggestions (Kids)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/meal-plan-suggestions` | List suggestions (kids: own, parents: children's) |
+| `POST` | `/api/meal-plan-suggestions` | Create suggestion (kids only) |
+| `POST` | `/api/meal-plan-suggestions/{id}/approve` | Approve suggestion (parents only) |
+| `POST` | `/api/meal-plan-suggestions/{id}/reject` | Reject suggestion (parents only) |
+| `DELETE` | `/api/meal-plan-suggestions/{id}` | Delete suggestion (kids: own only) |
+
+### Lunchbox
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/lunchbox` | List lunchbox items (kids: own, parents: children's) |
+| `POST` | `/api/lunchbox` | Add lunchbox item (kids only) |
+| `DELETE` | `/api/lunchbox/{id}` | Remove lunchbox item (kids: own only) |
+| `GET` | `/api/lunchbox/suggest?q=` | Autocomplete suggestions (family vocabulary) |
 
 ---
 
@@ -473,6 +659,8 @@ APP_URL=https://your-domain.com
 
 ## 🧪 Testing
 
+The app includes comprehensive Feature tests for all major functionality.
+
 ```bash
 # Run all tests
 php artisan test
@@ -482,10 +670,24 @@ php artisan test --coverage
 
 # Run specific test file
 php artisan test tests/Feature/ItemTest.php
+php artisan test tests/Feature/LunchboxTest.php
 
 # Run specific test method
 php artisan test --filter test_user_can_create_item
 ```
+
+**Test Coverage:**
+- ✅ Shopping list CRUD operations
+- ✅ Item movement between lists (quick_buy, to_buy, inventory, trash)
+- ✅ Recurring schedules
+- ✅ Lunchbox feature (12 tests, 26 assertions)
+  - Kids can create/delete own items
+  - Kids cannot delete siblings' items
+  - Parents can view children's items (read-only)
+  - Autocomplete within family boundaries
+- ✅ Meal plan authorization and policies
+- ✅ Category management
+- ✅ Activity logging
 
 ---
 
@@ -530,7 +732,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <p align="center">
-  <strong>Version 2.0</strong> • Laravel 11 • PHP 8.3 • Vue 3.4 • PostgreSQL 16
+  <strong>Version 3.0</strong> • Laravel 11 • PHP 8.3 • Vue 3.4 • PostgreSQL 16
+</p>
+
+<p align="center">
+  <em>A comprehensive family organization app with shopping lists, meal planning, and lunchbox management</em>
 </p>
 
 <p align="center">
