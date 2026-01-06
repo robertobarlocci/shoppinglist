@@ -50,7 +50,8 @@ class MealPlanSuggestionController extends Controller
             ->orderByRaw("CASE
                 WHEN meal_type = 'breakfast' THEN 1
                 WHEN meal_type = 'lunch' THEN 2
-                WHEN meal_type = 'dinner' THEN 3
+                WHEN meal_type = 'zvieri' THEN 3
+                WHEN meal_type = 'dinner' THEN 4
                 END")
             ->get();
 
@@ -71,7 +72,7 @@ class MealPlanSuggestionController extends Controller
 
         $validated = $request->validate([
             'date' => 'required|date',
-            'meal_type' => 'required|in:breakfast,lunch,dinner',
+            'meal_type' => 'required|in:breakfast,lunch,zvieri,dinner',
             'title' => 'required|string|max:255',
         ]);
 
