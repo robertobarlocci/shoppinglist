@@ -88,6 +88,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useLunchboxStore } from '../Stores/lunchbox';
+import { useToast } from '../Composables/useToast';
 
 const props = defineProps({
   date: {
@@ -117,6 +118,7 @@ const props = defineProps({
 });
 
 const lunchboxStore = useLunchboxStore();
+const { success, error: showError } = useToast();
 
 const newItemName = ref('');
 const adding = ref(false);
@@ -125,6 +127,8 @@ const suggestions = ref([]);
 const showSuggestions = ref(false);
 const selectedSuggestionIndex = ref(-1);
 const debounceTimer = ref(null);
+const showDeleteConfirm = ref(false);
+const itemToDelete = ref(null);
 
 // Fetch autocomplete suggestions
 const fetchSuggestions = async () => {
@@ -211,9 +215,10 @@ const addItem = async () => {
     });
     newItemName.value = '';
     clearSuggestions();
+    success('Item hinzugefügt');
   } catch (error) {
     console.error('Error adding lunchbox item:', error);
-    alert('Fehler beim Hinzufügen des Items');
+    showError('Fehler beim Hinzufügen des Items');
   } finally {
     adding.value = false;
   }
@@ -226,9 +231,10 @@ const deleteItem = async (itemId) => {
   deleting.value = true;
   try {
     await lunchboxStore.deleteLunchboxItem(itemId);
+    success('Item gelöscht');
   } catch (error) {
     console.error('Error deleting lunchbox item:', error);
-    alert('Fehler beim Löschen des Items');
+    showError('Fehler beim Löschen des Items');
   } finally {
     deleting.value = false;
   }
