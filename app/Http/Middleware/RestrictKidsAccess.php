@@ -11,7 +11,7 @@ class RestrictKidsAccess
     /**
      * Handle an incoming request.
      *
-     * Kids are only allowed to access /meal-planner and related API endpoints.
+     * Kids are only allowed to access /meal-planner, /lunchbox and related API endpoints.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
@@ -26,9 +26,11 @@ class RestrictKidsAccess
             // Allowed paths for kids
             $allowedPaths = [
                 'meal-planner',
+                'lunchbox',
                 'api/user',
                 'api/meal-plans',
                 'api/meal-suggestions',
+                'api/lunchbox',
                 'logout',
                 'login',
                 'sanctum/csrf-cookie',

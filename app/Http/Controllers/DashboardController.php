@@ -37,4 +37,12 @@ class DashboardController extends Controller
     {
         return Inertia::render('MealPlanner');
     }
+
+    /**
+     * Display the lunchbox planner.
+     */
+    public function lunchbox()
+    {
+        return Inertia::render('LunchboxView');
+    }
 }

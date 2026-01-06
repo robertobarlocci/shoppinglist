@@ -104,6 +104,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get lunchbox items for this user.
+     */
+    public function lunchboxItems(): HasMany
+    {
+        return $this->hasMany(LunchboxItem::class);
+    }
+
+    /**
      * Check if user is a parent.
      */
     public function isParent(): bool

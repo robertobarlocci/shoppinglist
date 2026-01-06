@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\MealPlanController;
 use App\Http\Controllers\Api\MealPlanSuggestionController;
+use App\Http\Controllers\Api\LunchboxController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +62,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/meal-suggestions/{suggestion}', [MealPlanSuggestionController::class, 'destroy']);
     Route::post('/meal-suggestions/{suggestion}/approve', [MealPlanSuggestionController::class, 'approve']);
     Route::post('/meal-suggestions/{suggestion}/reject', [MealPlanSuggestionController::class, 'reject']);
+
+    // Lunchbox Items (Kids feature)
+    Route::get('/lunchbox', [LunchboxController::class, 'index']);
+    Route::post('/lunchbox', [LunchboxController::class, 'store']);
+    Route::delete('/lunchbox/{lunchboxItem}', [LunchboxController::class, 'destroy']);
+    Route::get('/lunchbox/autocomplete', [LunchboxController::class, 'autocomplete']);
 
     // Activities
     Route::get('/activities', [ActivityController::class, 'index']);

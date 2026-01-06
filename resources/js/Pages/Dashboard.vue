@@ -31,6 +31,15 @@
               <span class="text-lg">📅</span>
             </Link>
 
+            <!-- Lunchbox -->
+            <Link
+              href="/lunchbox"
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Lunchbox"
+            >
+              <span class="text-lg">🍱</span>
+            </Link>
+
             <!-- Offline indicator -->
             <div v-if="!isOnline" class="text-yellow-500 text-sm hidden sm:block">
               ⚠️ Offline
