@@ -31,7 +31,7 @@ use Illuminate\Notifications\Notifiable;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, MealPlanSuggestion> $mealPlanSuggestions
  * @property-read \Illuminate\Database\Eloquent\Collection<int, LunchboxItem> $lunchboxItems
  */
-class User extends Authenticatable
+final class User extends Authenticatable
 {
     use HasFactory;
     use Notifiable;
@@ -42,7 +42,23 @@ class User extends Authenticatable
      * @deprecated Use UserRole enum instead
      */
     public const ROLE_PARENT = 'parent';
+
     public const ROLE_KID = 'kid';
+
+    /**
+     * Generate a random avatar color for new users.
+     *
+     * @var array<int, string>
+     */
+    private const AVATAR_COLORS = [
+        '#4ECDC4',
+        '#FF6B6B',
+        '#4CAF50',
+        '#2196F3',
+        '#FF9800',
+        '#9C27B0',
+        '#E91E63',
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -67,20 +83,6 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'role' => UserRole::class,
-        ];
-    }
 
     /**
      * Get the items created by this user.
@@ -165,7 +167,7 @@ class User extends Authenticatable
     /**
      * Scope a query to only include parents.
      *
-     * @param Builder<User> $query
+     * @param  Builder<User>  $query
      * @return Builder<User>
      */
     public function scopeParents(Builder $query): Builder
@@ -176,7 +178,7 @@ class User extends Authenticatable
     /**
      * Scope a query to only include kids.
      *
-     * @param Builder<User> $query
+     * @param  Builder<User>  $query
      * @return Builder<User>
      */
     public function scopeKids(Builder $query): Builder
@@ -186,24 +188,23 @@ class User extends Authenticatable
 
     /**
      * Generate a random avatar color for new users.
-     *
-     * @var array<int, string>
-     */
-    private const AVATAR_COLORS = [
-        '#4ECDC4',
-        '#FF6B6B',
-        '#4CAF50',
-        '#2196F3',
-        '#FF9800',
-        '#9C27B0',
-        '#E91E63',
-    ];
-
-    /**
-     * Generate a random avatar color for new users.
      */
     public static function generateAvatarColor(): string
     {
         return self::AVATAR_COLORS[array_rand(self::AVATAR_COLORS)];
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'role' => UserRole::class,
+        ];
     }
 }

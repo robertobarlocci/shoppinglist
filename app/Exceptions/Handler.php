@@ -8,8 +8,6 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
@@ -66,6 +64,7 @@ final class Handler extends ExceptionHandler
         $this->renderable(function (ModelNotFoundException $e, $request) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 $model = class_basename($e->getModel());
+
                 return new JsonResponse([
                     'success' => false,
                     'message' => "{$model} nicht gefunden.",

@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-class KidsAccountSeeder extends Seeder
+final class KidsAccountSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -16,7 +18,7 @@ class KidsAccountSeeder extends Seeder
         // Find or create a parent account
         $parent = User::where('email', 'parent@example.com')->first();
 
-        if (!$parent) {
+        if (! $parent) {
             $parent = User::create([
                 'name' => 'Parent Account',
                 'email' => 'parent@example.com',
@@ -49,7 +51,7 @@ class KidsAccountSeeder extends Seeder
         foreach ($kids as $kidData) {
             $existingKid = User::where('email', $kidData['email'])->first();
 
-            if (!$existingKid) {
+            if (! $existingKid) {
                 User::create([
                     'name' => $kidData['name'],
                     'email' => $kidData['email'],

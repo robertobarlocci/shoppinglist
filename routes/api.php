@@ -1,12 +1,14 @@
 <?php
 
-use App\Http\Controllers\Api\ItemController;
-use App\Http\Controllers\Api\CategoryController;
+declare(strict_types=1);
+
 use App\Http\Controllers\Api\ActivityController;
-use App\Http\Controllers\Api\SyncController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ItemController;
+use App\Http\Controllers\Api\LunchboxController;
 use App\Http\Controllers\Api\MealPlanController;
 use App\Http\Controllers\Api\MealPlanSuggestionController;
-use App\Http\Controllers\Api\LunchboxController;
+use App\Http\Controllers\Api\SyncController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

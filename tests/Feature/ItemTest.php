@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\Item;
 use App\Models\Category;
+use App\Models\Item;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class ItemTest extends TestCase
+final class ItemTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -32,7 +34,7 @@ class ItemTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonStructure([
-                'data' => ['id', 'name', 'quantity', 'list_type', 'category']
+                'data' => ['id', 'name', 'quantity', 'list_type', 'category'],
             ]);
 
         $this->assertDatabaseHas('items', [
@@ -189,7 +191,7 @@ class ItemTest extends TestCase
     public function test_trash_list_returns_soft_deleted_items()
     {
         $user = User::factory()->create();
-        
+
         // Create an active item
         $activeItem = Item::factory()->create([
             'list_type' => Item::LIST_TYPE_TO_BUY,

@@ -26,7 +26,7 @@ final class ItemQueryBuilder
      */
     public static function query(): self
     {
-        return new self();
+        return new self;
     }
 
     /**
@@ -35,6 +35,7 @@ final class ItemQueryBuilder
     public function withTrashed(): self
     {
         $this->query->withTrashed();
+
         return $this;
     }
 
@@ -44,6 +45,7 @@ final class ItemQueryBuilder
     public function forListType(ListType $listType): self
     {
         $this->query->where('list_type', $listType);
+
         return $this;
     }
 
@@ -53,6 +55,7 @@ final class ItemQueryBuilder
     public function inTrash(): self
     {
         $this->query->withTrashed()->where('list_type', ListType::TRASH);
+
         return $this;
     }
 
@@ -62,6 +65,7 @@ final class ItemQueryBuilder
     public function active(): self
     {
         $this->query->where('list_type', '!=', ListType::TRASH);
+
         return $this;
     }
 
@@ -75,6 +79,7 @@ final class ItemQueryBuilder
         } else {
             $this->query->whereNull('category_id');
         }
+
         return $this;
     }
 
@@ -84,6 +89,7 @@ final class ItemQueryBuilder
     public function search(string $term): self
     {
         $this->query->where('name', 'ilike', "%{$term}%");
+
         return $this;
     }
 
@@ -93,6 +99,7 @@ final class ItemQueryBuilder
     public function withCategory(): self
     {
         $this->query->with('category');
+
         return $this;
     }
 
@@ -102,6 +109,7 @@ final class ItemQueryBuilder
     public function withRecurringSchedule(): self
     {
         $this->query->with('recurringSchedule');
+
         return $this;
     }
 
@@ -111,6 +119,7 @@ final class ItemQueryBuilder
     public function withRelations(): self
     {
         $this->query->with(['category', 'recurringSchedule', 'creator']);
+
         return $this;
     }
 
@@ -123,6 +132,7 @@ final class ItemQueryBuilder
             ->orderBy('categories.sort_order')
             ->orderBy('items.name')
             ->select('items.*');
+
         return $this;
     }
 
@@ -132,6 +142,7 @@ final class ItemQueryBuilder
     public function orderByName(string $direction = 'asc'): self
     {
         $this->query->orderBy('name', $direction);
+
         return $this;
     }
 
@@ -141,6 +152,7 @@ final class ItemQueryBuilder
     public function orderByRecentlyMoved(): self
     {
         $this->query->orderByDesc('moved_at');
+
         return $this;
     }
 
@@ -150,6 +162,7 @@ final class ItemQueryBuilder
     public function hasRecurringSchedule(): self
     {
         $this->query->has('recurringSchedule');
+
         return $this;
     }
 

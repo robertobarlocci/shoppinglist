@@ -47,6 +47,16 @@ final class SetRecurringRequest extends FormRequest
     }
 
     /**
+     * Get the schedule data as an array.
+     *
+     * @return array<string, bool>
+     */
+    public function scheduleData(): array
+    {
+        return $this->only(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
+    }
+
+    /**
      * Prepare the data for validation.
      */
     protected function prepareForValidation(): void
@@ -59,15 +69,5 @@ final class SetRecurringRequest extends FormRequest
                 $this->merge([$day => false]);
             }
         }
-    }
-
-    /**
-     * Get the schedule data as an array.
-     *
-     * @return array<string, bool>
-     */
-    public function scheduleData(): array
-    {
-        return $this->only(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
     }
 }

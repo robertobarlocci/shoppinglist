@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Models\LunchboxItem;
@@ -7,7 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class LunchboxTest extends TestCase
+final class LunchboxTest extends TestCase
 {
     use RefreshDatabase;
 

@@ -19,7 +19,7 @@ final class CreateItemAction
     /**
      * Create a new item.
      *
-     * @param array{name: string, quantity?: string|null, category_id?: int|null, list_type: string} $data
+     * @param  array{name: string, quantity?: string|null, category_id?: int|null, list_type: string}  $data
      */
     public function execute(array $data, User $user): Item
     {

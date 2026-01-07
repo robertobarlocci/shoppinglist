@@ -16,7 +16,7 @@ final readonly class ActivityLogger
     /**
      * Log an activity.
      *
-     * @param array<string, mixed>|null $metadata
+     * @param  array<string, mixed>|null  $metadata
      */
     public function log(
         ActivityAction $action,
@@ -110,7 +110,7 @@ final readonly class ActivityLogger
     /**
      * Log item edited activity.
      *
-     * @param array<string, mixed> $changes
+     * @param  array<string, mixed>  $changes
      */
     public function itemEdited(Item $item, User $user, array $changes = []): Activity
     {
@@ -127,7 +127,7 @@ final readonly class ActivityLogger
     /**
      * Log recurring items triggered activity.
      *
-     * @param array<string> $itemNames
+     * @param  array<string>  $itemNames
      */
     public function recurringTriggered(array $itemNames): Activity
     {

@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Item;
 use App\Models\RecurringSchedule;
+use App\Models\User;
 use App\Services\RecurringService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class RecurringTest extends TestCase
+final class RecurringTest extends TestCase
 {
     use RefreshDatabase;
 

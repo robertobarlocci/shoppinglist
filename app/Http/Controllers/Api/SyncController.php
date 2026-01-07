@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\OfflineSyncService;
 use Illuminate\Http\Request;
 
-class SyncController extends Controller
+final class SyncController extends Controller
 {
     public function __construct(
-        private OfflineSyncService $syncService
+        private OfflineSyncService $syncService,
     ) {}
 
     /**
@@ -27,7 +29,7 @@ class SyncController extends Controller
 
         $results = $this->syncService->processOfflineActions(
             $validated['actions'],
-            auth()->user()
+            auth()->user(),
         );
 
         return response()->json([

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -9,10 +11,10 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AuthenticatedSessionController extends Controller
+final class AuthenticatedSessionController extends Controller
 {
     public function __construct(
-        private ActivityLogger $activityLogger
+        private ActivityLogger $activityLogger,
     ) {}
 
     /**
@@ -33,7 +35,7 @@ class AuthenticatedSessionController extends Controller
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'), true)) {
+        if (! Auth::attempt($request->only('email', 'password'), true)) {
             return back()->withErrors([
                 'email' => 'Die eingegebenen Zugangsdaten sind ungültig.',
             ]);

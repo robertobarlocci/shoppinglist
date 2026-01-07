@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LunchboxItemResource;
 use App\Models\LunchboxItem;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
-class LunchboxController extends Controller
+final class LunchboxController extends Controller
 {
     /**
      * Get lunchbox items for a specific week.
@@ -78,6 +80,7 @@ class LunchboxController extends Controller
             return new LunchboxItemResource($lunchboxItem->load('user'));
         } catch (\Exception $e) {
             DB::rollBack();
+
             throw $e;
         }
     }
@@ -101,6 +104,7 @@ class LunchboxController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             throw $e;
         }
     }
@@ -140,7 +144,7 @@ class LunchboxController extends Controller
         } elseif ($user->isParent()) {
             // For parents, get suggestions from all their children
             $childIds = $user->children()->pluck('id')->toArray();
-            if (!empty($childIds)) {
+            if (! empty($childIds)) {
                 $itemQuery->whereIn('user_id', $childIds);
             } else {
                 // If parent has no children, return empty
@@ -149,7 +153,7 @@ class LunchboxController extends Controller
         }
 
         // Apply search filter if query provided
-        if (!empty($query)) {
+        if (! empty($query)) {
             $itemQuery->where('item_name', 'like', $query . '%');
         }
 

@@ -24,18 +24,18 @@ final class Category extends Model
     use HasFactory;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'categories';
-
-    /**
      * Indicates if the model should be timestamped.
      *
      * @var bool
      */
     public $timestamps = false;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'categories';
 
     /**
      * The attributes that are mass assignable.
@@ -52,19 +52,6 @@ final class Category extends Model
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'is_default' => 'boolean',
-            'sort_order' => 'integer',
-        ];
-    }
-
-    /**
      * Get the items for this category.
      */
     public function items(): HasMany
@@ -75,7 +62,7 @@ final class Category extends Model
     /**
      * Scope a query to only include default categories.
      *
-     * @param Builder<Category> $query
+     * @param  Builder<Category>  $query
      * @return Builder<Category>
      */
     public function scopeDefault(Builder $query): Builder
@@ -86,7 +73,7 @@ final class Category extends Model
     /**
      * Scope a query to only include custom categories.
      *
-     * @param Builder<Category> $query
+     * @param  Builder<Category>  $query
      * @return Builder<Category>
      */
     public function scopeCustom(Builder $query): Builder
@@ -97,11 +84,24 @@ final class Category extends Model
     /**
      * Scope a query to order by sort order.
      *
-     * @param Builder<Category> $query
+     * @param  Builder<Category>  $query
      * @return Builder<Category>
      */
     public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('sort_order')->orderBy('name');
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'is_default' => 'boolean',
+            'sort_order' => 'integer',
+        ];
     }
 }

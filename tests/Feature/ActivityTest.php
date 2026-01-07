@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\Item;
 use App\Models\Activity;
+use App\Models\Item;
+use App\Models\User;
 use App\Services\ActivityLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class ActivityTest extends TestCase
+final class ActivityTest extends TestCase
 {
     use RefreshDatabase;
 

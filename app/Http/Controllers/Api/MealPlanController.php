@@ -77,7 +77,7 @@ final class MealPlanController extends Controller
                 [
                     'user_id' => $request->user()->id,
                     'title' => $validated['title'],
-                ]
+                ],
             );
 
             $this->activityLogger->mealPlanCreated($mealPlan, $request->user());
@@ -127,7 +127,7 @@ final class MealPlanController extends Controller
 
         return $this->success(
             data: ['ingredient' => $ingredient->load('item')],
-            message: 'Ingredient added'
+            message: 'Ingredient added',
         );
     }
 
@@ -158,7 +158,7 @@ final class MealPlanController extends Controller
 
         return $this->success(
             data: $result,
-            message: "{$result['added_count']} ingredients added to shopping list"
+            message: "{$result['added_count']} ingredients added to shopping list",
         );
     }
 

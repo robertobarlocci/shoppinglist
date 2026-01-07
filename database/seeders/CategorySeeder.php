@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\Category;
 use Illuminate\Database\Seeder;
 
-class CategorySeeder extends Seeder
+final class CategorySeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -106,7 +108,7 @@ class CategorySeeder extends Seeder
         foreach ($categories as $category) {
             Category::firstOrCreate(
                 ['slug' => $category['slug']],
-                $category
+                $category,
             );
         }
     }

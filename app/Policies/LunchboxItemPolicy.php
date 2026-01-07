@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\LunchboxItem;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
-class LunchboxItemPolicy
+final class LunchboxItemPolicy
 {
     /**
      * Determine whether the user can view any models.
@@ -29,6 +30,7 @@ class LunchboxItemPolicy
         // Parents can view their children's items
         if ($user->isParent()) {
             $childIds = $user->children()->pluck('id')->toArray();
+
             return in_array($lunchboxItem->user_id, $childIds);
         }
 

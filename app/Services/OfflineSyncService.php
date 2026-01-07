@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Item;
@@ -7,18 +9,18 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class OfflineSyncService
+final class OfflineSyncService
 {
     public function __construct(
-        private ActivityLogger $activityLogger
+        private ActivityLogger $activityLogger,
     ) {}
 
     /**
      * Process offline actions that were queued on the client.
      * Handles partial failures gracefully - successful actions commit even if others fail.
      *
-     * @param array $actions Array of offline actions
-     * @param User $user The user performing the sync
+     * @param  array  $actions  Array of offline actions
+     * @param  User  $user  The user performing the sync
      * @return array Result of sync operation
      */
     public function processOfflineActions(array $actions, User $user): array
@@ -145,7 +147,7 @@ class OfflineSyncService
     {
         $item = Item::find($data['id']);
 
-        if (!$item) {
+        if (! $item) {
             return [
                 'status' => 'error',
                 'action' => 'item:update',
@@ -186,7 +188,7 @@ class OfflineSyncService
     {
         $item = Item::find($data['id']);
 
-        if (!$item) {
+        if (! $item) {
             // Item already deleted, consider it success
             return [
                 'status' => 'success',
@@ -213,7 +215,7 @@ class OfflineSyncService
     {
         $item = Item::find($data['id']);
 
-        if (!$item) {
+        if (! $item) {
             return [
                 'status' => 'error',
                 'action' => 'item:move',

@@ -1,21 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\MealPlanSuggestionResource;
-use App\Models\MealPlanSuggestion;
 use App\Models\MealPlan;
-use App\Models\User;
+use App\Models\MealPlanSuggestion;
 use App\Services\ActivityLogger;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
-class MealPlanSuggestionController extends Controller
+final class MealPlanSuggestionController extends Controller
 {
     public function __construct(
-        private ActivityLogger $activityLogger
+        private ActivityLogger $activityLogger,
     ) {}
 
     /**
@@ -66,7 +67,7 @@ class MealPlanSuggestionController extends Controller
         $user = auth()->user();
 
         // Only kids can create suggestions
-        if (!$user->isKid()) {
+        if (! $user->isKid()) {
             return response()->json(['message' => 'Only kids can create meal suggestions'], 403);
         }
 
@@ -92,6 +93,7 @@ class MealPlanSuggestionController extends Controller
             return new MealPlanSuggestionResource($suggestion->load('user'));
         } catch (\Exception $e) {
             DB::rollBack();
+
             throw $e;
         }
     }
@@ -123,7 +125,7 @@ class MealPlanSuggestionController extends Controller
 
         // Kids can only delete their own pending suggestions
         if ($user->isKid()) {
-            if ($suggestion->user_id !== $user->id || !$suggestion->isPending()) {
+            if ($suggestion->user_id !== $user->id || ! $suggestion->isPending()) {
                 abort(403, 'Unauthorized');
             }
         }
@@ -142,12 +144,12 @@ class MealPlanSuggestionController extends Controller
         $user = auth()->user();
 
         // Only parents can approve suggestions
-        if (!$user->isParent()) {
+        if (! $user->isParent()) {
             return response()->json(['message' => 'Only parents can approve suggestions'], 403);
         }
 
         // Can only approve pending suggestions
-        if (!$suggestion->isPending()) {
+        if (! $suggestion->isPending()) {
             return response()->json(['message' => 'Suggestion is not pending'], 400);
         }
 
@@ -163,7 +165,7 @@ class MealPlanSuggestionController extends Controller
                 [
                     'user_id' => $user->id,
                     'title' => $suggestion->title,
-                ]
+                ],
             );
 
             // Update suggestion status
@@ -186,6 +188,7 @@ class MealPlanSuggestionController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             throw $e;
         }
     }
@@ -198,12 +201,12 @@ class MealPlanSuggestionController extends Controller
         $user = auth()->user();
 
         // Only parents can reject suggestions
-        if (!$user->isParent()) {
+        if (! $user->isParent()) {
             return response()->json(['message' => 'Only parents can reject suggestions'], 403);
         }
 
         // Can only reject pending suggestions
-        if (!$suggestion->isPending()) {
+        if (! $suggestion->isPending()) {
             return response()->json(['message' => 'Suggestion is not pending'], 400);
         }
 

@@ -38,19 +38,6 @@ final class MealPlan extends Model
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'date' => 'date',
-            'meal_type' => MealType::class,
-        ];
-    }
-
-    /**
      * Get the user that owns the meal plan.
      */
     public function user(): BelongsTo
@@ -72,5 +59,18 @@ final class MealPlan extends Model
     public function belongsToUser(User $user): bool
     {
         return $this->user_id === $user->id;
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'date' => 'date',
+            'meal_type' => MealType::class,
+        ];
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -9,10 +11,10 @@ use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class CategoryController extends Controller
+final class CategoryController extends Controller
 {
     public function __construct(
-        private ActivityLogger $activityLogger
+        private ActivityLogger $activityLogger,
     ) {}
 
     /**
@@ -40,7 +42,7 @@ class CategoryController extends Controller
         $categoryCount = Category::count();
         if ($categoryCount >= 20) {
             return response()->json([
-                'message' => 'Maximale Anzahl von 20 Kategorien erreicht'
+                'message' => 'Maximale Anzahl von 20 Kategorien erreicht',
             ], 422);
         }
 
@@ -72,7 +74,7 @@ class CategoryController extends Controller
         // Prevent updating default categories
         if ($category->is_default) {
             return response()->json([
-                'message' => 'Standard-Kategorien können nicht bearbeitet werden'
+                'message' => 'Standard-Kategorien können nicht bearbeitet werden',
             ], 422);
         }
 
@@ -99,7 +101,7 @@ class CategoryController extends Controller
         // Prevent deleting default categories
         if ($category->is_default) {
             return response()->json([
-                'message' => 'Standard-Kategorien können nicht gelöscht werden'
+                'message' => 'Standard-Kategorien können nicht gelöscht werden',
             ], 422);
         }
 

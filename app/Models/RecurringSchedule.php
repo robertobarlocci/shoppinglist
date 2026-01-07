@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class RecurringSchedule extends Model
+final class RecurringSchedule extends Model
 {
     use HasFactory;
 
@@ -28,25 +30,6 @@ class RecurringSchedule extends Model
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'monday' => 'boolean',
-            'tuesday' => 'boolean',
-            'wednesday' => 'boolean',
-            'thursday' => 'boolean',
-            'friday' => 'boolean',
-            'saturday' => 'boolean',
-            'sunday' => 'boolean',
-            'last_triggered_at' => 'date',
-        ];
-    }
-
-    /**
      * Get the item that owns the recurring schedule.
      */
     public function item(): BelongsTo
@@ -60,6 +43,7 @@ class RecurringSchedule extends Model
     public function isActiveToday(): bool
     {
         $dayOfWeek = strtolower(now()->format('l'));
+
         return $this->$dayOfWeek ?? false;
     }
 
@@ -68,7 +52,7 @@ class RecurringSchedule extends Model
      */
     public function shouldTriggerToday(): bool
     {
-        if (!$this->isActiveToday()) {
+        if (! $this->isActiveToday()) {
             return false;
         }
 
@@ -131,6 +115,25 @@ class RecurringSchedule extends Model
             'sunday' => 'So',
         ];
 
-        return implode(', ', array_map(fn($day) => $germanDays[$day] ?? $day, $days));
+        return implode(', ', array_map(fn ($day) => $germanDays[$day] ?? $day, $days));
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'monday' => 'boolean',
+            'tuesday' => 'boolean',
+            'wednesday' => 'boolean',
+            'thursday' => 'boolean',
+            'friday' => 'boolean',
+            'saturday' => 'boolean',
+            'sunday' => 'boolean',
+            'last_triggered_at' => 'date',
+        ];
     }
 }

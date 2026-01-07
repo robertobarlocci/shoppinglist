@@ -9,11 +9,11 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 final class SyncConflictException extends HttpException
 {
     /**
-     * @param array<string, mixed> $conflicts
+     * @param  array<string, mixed>  $conflicts
      */
     public function __construct(
         public readonly array $conflicts,
-        string $message = 'Synchronisierungskonflikt entdeckt.'
+        string $message = 'Synchronisierungskonflikt entdeckt.',
     ) {
         parent::__construct(409, $message);
     }

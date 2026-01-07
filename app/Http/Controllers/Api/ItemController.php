@@ -65,7 +65,7 @@ final class ItemController extends Controller
     {
         $item = $this->createItemAction->execute(
             $request->validated(),
-            $request->user()
+            $request->user(),
         );
 
         return new ItemResource($item);
@@ -117,7 +117,7 @@ final class ItemController extends Controller
         $result = $this->moveItemAction->execute(
             $item,
             $request->toList(),
-            $request->user()
+            $request->user(),
         );
 
         if ($result['item'] === null) {
@@ -190,12 +190,12 @@ final class ItemController extends Controller
                     ->groupBy('name');
             })
             ->with('category')
-            ->orderByRaw("CASE
+            ->orderByRaw('CASE
                 WHEN list_type = ? THEN 1
                 WHEN list_type = ? THEN 2
                 WHEN list_type = ? THEN 3
                 ELSE 4
-            END", [
+            END', [
                 ListType::INVENTORY->value,
                 ListType::TO_BUY->value,
                 ListType::QUICK_BUY->value,

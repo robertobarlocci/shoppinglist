@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
-class HandleInertiaRequests extends Middleware
+final class HandleInertiaRequests extends Middleware
 {
     /**
      * The root template that's loaded on the first page visit.
@@ -46,7 +48,7 @@ class HandleInertiaRequests extends Middleware
                     'avatar_color' => $user->avatar_color,
                     'role' => $user->role,
                     'children' => $user->isParent()
-                        ? $user->children->map(fn($child) => [
+                        ? $user->children->map(fn ($child) => [
                             'id' => $child->id,
                             'name' => $child->name,
                             'avatar_color' => $child->avatar_color,

@@ -38,6 +38,19 @@ final class Item extends Model
     use SoftDeletes;
 
     /**
+     * List type constants.
+     *
+     * @deprecated Use ListType enum instead
+     */
+    public const LIST_TYPE_QUICK_BUY = 'quick_buy';
+
+    public const LIST_TYPE_TO_BUY = 'to_buy';
+
+    public const LIST_TYPE_INVENTORY = 'inventory';
+
+    public const LIST_TYPE_TRASH = 'trash';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
@@ -52,30 +65,6 @@ final class Item extends Model
         'created_by',
         'moved_at',
     ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'list_type' => ListType::class,
-            'moved_at' => 'datetime',
-            'deleted_at' => 'datetime',
-        ];
-    }
-
-    /**
-     * List type constants.
-     *
-     * @deprecated Use ListType enum instead
-     */
-    public const LIST_TYPE_QUICK_BUY = 'quick_buy';
-    public const LIST_TYPE_TO_BUY = 'to_buy';
-    public const LIST_TYPE_INVENTORY = 'inventory';
-    public const LIST_TYPE_TRASH = 'trash';
 
     /**
      * Get the category that owns the item.
@@ -120,7 +109,7 @@ final class Item extends Model
     /**
      * Scope a query to only include items in the shopping list.
      *
-     * @param Builder<Item> $query
+     * @param  Builder<Item>  $query
      * @return Builder<Item>
      */
     public function scopeToBuy(Builder $query): Builder
@@ -131,7 +120,7 @@ final class Item extends Model
     /**
      * Scope a query to only include quick buy items.
      *
-     * @param Builder<Item> $query
+     * @param  Builder<Item>  $query
      * @return Builder<Item>
      */
     public function scopeQuickBuy(Builder $query): Builder
@@ -142,7 +131,7 @@ final class Item extends Model
     /**
      * Scope a query to only include inventory items.
      *
-     * @param Builder<Item> $query
+     * @param  Builder<Item>  $query
      * @return Builder<Item>
      */
     public function scopeInventory(Builder $query): Builder
@@ -153,7 +142,7 @@ final class Item extends Model
     /**
      * Scope a query to only include trashed items.
      *
-     * @param Builder<Item> $query
+     * @param  Builder<Item>  $query
      * @return Builder<Item>
      */
     public function scopeTrash(Builder $query): Builder
@@ -221,5 +210,19 @@ final class Item extends Model
         $this->list_type = $restoredType;
         $this->deleted_from = null;
         $this->save();
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'list_type' => ListType::class,
+            'moved_at' => 'datetime',
+            'deleted_at' => 'datetime',
+        ];
     }
 }

@@ -17,7 +17,7 @@ trait ApiResponse
     protected function success(
         JsonResource|ResourceCollection|array|null $data = null,
         string $message = 'Success',
-        int $statusCode = Response::HTTP_OK
+        int $statusCode = Response::HTTP_OK,
     ): JsonResponse {
         $response = [
             'success' => true,
@@ -39,7 +39,7 @@ trait ApiResponse
      */
     protected function created(
         JsonResource|array|null $data = null,
-        string $message = 'Created successfully'
+        string $message = 'Created successfully',
     ): JsonResponse {
         return $this->success($data, $message, Response::HTTP_CREATED);
     }
@@ -58,7 +58,7 @@ trait ApiResponse
     protected function error(
         string $message = 'Error',
         int $statusCode = Response::HTTP_BAD_REQUEST,
-        array $errors = []
+        array $errors = [],
     ): JsonResponse {
         $response = [
             'success' => false,

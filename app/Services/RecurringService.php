@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Item;
 use App\Models\RecurringSchedule;
 use Illuminate\Support\Collection;
 
-class RecurringService
+final class RecurringService
 {
     public function __construct(
-        private ActivityLogger $activityLogger
+        private ActivityLogger $activityLogger,
     ) {}
 
     /**
@@ -22,7 +24,7 @@ class RecurringService
 
         $schedules = RecurringSchedule::with('item.category')
             ->get()
-            ->filter(fn($schedule) => $schedule->shouldTriggerToday());
+            ->filter(fn ($schedule) => $schedule->shouldTriggerToday());
 
         foreach ($schedules as $schedule) {
             $sourceItem = $schedule->item;

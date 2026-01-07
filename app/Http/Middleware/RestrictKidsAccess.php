@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class RestrictKidsAccess
+final class RestrictKidsAccess
 {
     /**
      * Handle an incoming request.
@@ -46,10 +48,11 @@ class RestrictKidsAccess
             }
 
             // If not allowed, redirect kids to meal planner
-            if (!$isAllowed) {
-                if ($request->expectsJson() || !$request->isMethod('GET')) {
+            if (! $isAllowed) {
+                if ($request->expectsJson() || ! $request->isMethod('GET')) {
                     return response()->json(['message' => 'Access forbidden for kids accounts'], 403);
                 }
+
                 return redirect('/meal-planner');
             }
         }

@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Inertia\Inertia;
 
-class DashboardController extends Controller
+final class DashboardController extends Controller
 {
     /**
      * Display the dashboard.

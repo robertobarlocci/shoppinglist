@@ -1,16 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\Item;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
-class ItemPolicy
+final class ItemPolicy
 {
     /**
      * Determine whether the user can view any models.
-     * 
+     *
      * Note: Currently all authenticated users share items (single household assumption).
      * For multi-household support, add household_id scoping here.
      */

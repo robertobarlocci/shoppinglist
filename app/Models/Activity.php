@@ -29,6 +29,31 @@ final class Activity extends Model
     use HasFactory;
 
     /**
+     * Activity action constants.
+     *
+     * @deprecated Use ActivityAction enum instead
+     */
+    public const ACTION_ITEM_ADDED = 'item_added';
+
+    public const ACTION_QUICK_BUY_ADDED = 'quick_buy_added';
+
+    public const ACTION_ITEM_CHECKED = 'item_checked';
+
+    public const ACTION_ITEM_DELETED = 'item_deleted';
+
+    public const ACTION_ITEM_RESTORED = 'item_restored';
+
+    public const ACTION_ITEM_EDITED = 'item_edited';
+
+    public const ACTION_RECURRING_TRIGGERED = 'recurring_triggered';
+
+    public const ACTION_CATEGORY_CREATED = 'category_created';
+
+    public const ACTION_USER_LOGIN = 'user_login';
+
+    public const ACTION_MEAL_PLAN_CREATED = 'meal_plan_created';
+
+    /**
      * Indicates if the model should be timestamped.
      *
      * @var bool
@@ -50,6 +75,25 @@ final class Activity extends Model
     ];
 
     /**
+     * Get the user who performed the activity.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Scope a query to only include recent activities.
+     *
+     * @param  Builder<Activity>  $query
+     * @return Builder<Activity>
+     */
+    public function scopeRecent(Builder $query, int $limit = 50): Builder
+    {
+        return $query->orderBy('created_at', 'desc')->limit($limit);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -61,30 +105,6 @@ final class Activity extends Model
             'metadata' => 'array',
             'created_at' => 'datetime',
         ];
-    }
-
-    /**
-     * Activity action constants.
-     *
-     * @deprecated Use ActivityAction enum instead
-     */
-    public const ACTION_ITEM_ADDED = 'item_added';
-    public const ACTION_QUICK_BUY_ADDED = 'quick_buy_added';
-    public const ACTION_ITEM_CHECKED = 'item_checked';
-    public const ACTION_ITEM_DELETED = 'item_deleted';
-    public const ACTION_ITEM_RESTORED = 'item_restored';
-    public const ACTION_ITEM_EDITED = 'item_edited';
-    public const ACTION_RECURRING_TRIGGERED = 'recurring_triggered';
-    public const ACTION_CATEGORY_CREATED = 'category_created';
-    public const ACTION_USER_LOGIN = 'user_login';
-    public const ACTION_MEAL_PLAN_CREATED = 'meal_plan_created';
-
-    /**
-     * Get the user who performed the activity.
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     /**
@@ -108,16 +128,5 @@ final class Activity extends Model
                 $this->subject_name,
             ),
         );
-    }
-
-    /**
-     * Scope a query to only include recent activities.
-     *
-     * @param Builder<Activity> $query
-     * @return Builder<Activity>
-     */
-    public function scopeRecent(Builder $query, int $limit = 50): Builder
-    {
-        return $query->orderBy('created_at', 'desc')->limit($limit);
     }
 }
