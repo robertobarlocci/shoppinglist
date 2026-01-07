@@ -7,7 +7,12 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://postgresql.org)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?style=flat-square&logo=php&logoColor=white)](https://php.net)
+[![CI](https://github.com/robertobarlocci/shoppinglist/actions/workflows/ci.yml/badge.svg)](https://github.com/robertobarlocci/shoppinglist/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+
+**🔗 Repository:** https://github.com/robertobarlocci/shoppinglist
+
+**🐳 Docker Image:** `ghcr.io/robertobarlocci/shoppinglist:latest`
 
 ---
 
@@ -145,23 +150,78 @@ shoppinglist/
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Option 1: Deploy Pre-built Docker Image (Recommended for Servers)
 
-- [Docker](https://docs.docker.com/get-docker/) & Docker Compose
-- [Git](https://git-scm.com/)
+The easiest way to run this app on your server. No building required!
 
-### Installation
+```bash
+# 1. Create a directory for the app
+mkdir -p /opt/shoppinglist && cd /opt/shoppinglist
+
+# 2. Download the production docker-compose file
+curl -O https://raw.githubusercontent.com/robertobarlocci/shoppinglist/main/docker-compose.prod.yml
+
+# 3. Download the nginx config
+mkdir -p docker/nginx
+curl -o docker/nginx/default.conf https://raw.githubusercontent.com/robertobarlocci/shoppinglist/main/docker/nginx/default.conf
+
+# 4. Create your .env file
+cat > .env << 'EOF'
+APP_NAME="Shopping List"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=http://your-server-ip:8585
+
+DB_CONNECTION=pgsql
+DB_HOST=db
+DB_PORT=5432
+DB_DATABASE=shoppinglist
+DB_USERNAME=shoppinglist
+DB_PASSWORD=CHANGE_THIS_TO_A_STRONG_PASSWORD
+
+REDIS_HOST=redis
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+SESSION_DRIVER=redis
+CACHE_STORE=redis
+QUEUE_CONNECTION=redis
+EOF
+
+# 5. Generate a secure app key and add it to .env
+APP_KEY=$(openssl rand -base64 32)
+echo "APP_KEY=base64:$APP_KEY" >> .env
+
+# 6. Pull and start the containers
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+
+# 7. Wait for database to be ready (30 seconds)
+sleep 30
+
+# 8. Run database migrations
+docker exec chnubber-app php artisan migrate --force
+
+# 9. (Optional) Seed demo data
+docker exec chnubber-app php artisan db:seed --force
+```
+
+**Your app is now running at `http://your-server-ip:8585`** 🎉
+
+### Option 2: Local Development Setup
+
+For developers who want to modify the code:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/shoppinglist.git
+git clone https://github.com/robertobarlocci/shoppinglist.git
 cd shoppinglist
 
 # 2. Copy environment file
 cp .env.example .env
 
 # 3. Start Docker containers
-docker-compose up -d
+docker compose up -d
 
 # 4. Enter the app container
 docker exec -it shoppinglist-app sh
@@ -184,7 +244,7 @@ npm run dev      # Development with hot reload
 
 ### Access the App
 
-- **Application:** http://localhost:8585
+- **Application:** http://localhost:8585 (or your server IP)
 - **Database (external):** localhost:54321
 
 ### Demo Credentials
@@ -632,7 +692,30 @@ docker-compose logs -f
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed production deployment instructions.
 
-### Quick Production Build
+### Docker Compose Files Explained
+
+| File | Purpose | When to Use |
+|------|---------|-------------|
+| `docker-compose.yml` | **Development** | Local development with live code changes |
+| `docker-compose.prod.yml` | **Production** | Server deployment with pre-built images |
+
+### Update Your Production Server
+
+```bash
+cd /opt/shoppinglist
+
+# Pull latest image (auto-built on GitHub)
+docker pull ghcr.io/robertobarlocci/shoppinglist:latest
+
+# Restart with new image
+docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml up -d
+
+# Run any new migrations
+docker exec chnubber-app php artisan migrate --force
+```
+
+### Quick Production Build (for development compose)
 
 ```bash
 # Build assets
@@ -711,7 +794,7 @@ php artisan test --filter test_user_can_create_item
 
 ## 🤝 Contributing
 
-1. Fork the repository
+1. Fork the repository at https://github.com/robertobarlocci/shoppinglist
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)

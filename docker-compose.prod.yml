@@ -1,11 +1,12 @@
-version: '3.8'
-
 # PRODUCTION DOCKER COMPOSE - Modern Best Practices
 # Data persists in Docker named volumes (stored on your SSD at /var/lib/docker/volumes/)
 # .env file should be at /opt/shoppinglist/.env on your host server
 
 services:
   app:
+    # Use pre-built image from GitHub Container Registry
+    # Image is automatically built on every push to main branch
+    image: ghcr.io/robertobarlocci/shoppinglist:latest
     build:
       context: .
       dockerfile: docker/php/Dockerfile
@@ -32,13 +33,13 @@ services:
     env_file:
       - .env
 
-    # Healthcheck: Verify PHP-FPM is responding
+    # Healthcheck: Verify PHP-FPM master process is running
     healthcheck:
-      test: ["CMD", "php-fpm-healthcheck"]
+      test: ["CMD-SHELL", "ps aux | grep -v grep | grep 'php-fpm: master' || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 40s
+      retries: 5
+      start_period: 60s
 
     # Resource limits (adjust based on your server)
     deploy:
@@ -58,10 +59,8 @@ services:
         max-file: "3"
 
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - db
+      - redis
 
   nginx:
     image: nginx:1.25-alpine
@@ -106,8 +105,7 @@ services:
         max-file: "3"
 
     depends_on:
-      app:
-        condition: service_healthy
+      - app
 
   db:
     image: postgres:16-alpine

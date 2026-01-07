@@ -1,6 +1,44 @@
 # 🚀 Deployment Guide - Modern Best Practices
 
-## 📁 Data Storage Architecture
+## � CI/CD Pipeline (Recommended)
+
+The application now supports **automated deployment via GitHub Actions**. When you push to `main`, GitHub will:
+
+1. Build the Docker image
+2. Push it to GitHub Container Registry (ghcr.io)
+3. Deploy to your server via SSH
+
+### Setup GitHub Secrets
+
+Go to your repository **Settings → Secrets and variables → Actions** and add:
+
+| Secret Name | Description |
+|-------------|-------------|
+| `SERVER_HOST` | Your server IP or hostname |
+| `SERVER_USER` | SSH username (usually `root`) |
+| `SERVER_SSH_KEY` | Private SSH key for authentication |
+| `SERVER_PORT` | SSH port (optional, defaults to 22) |
+
+### Generate SSH Key (if needed)
+
+```bash
+# On your local machine
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_deploy
+
+# Copy public key to server
+ssh-copy-id -i ~/.ssh/github_deploy.pub user@your-server
+
+# Copy private key content for GitHub secret
+cat ~/.ssh/github_deploy
+```
+
+### Manual Trigger
+
+You can also manually trigger deployments from the GitHub Actions tab using "workflow_dispatch".
+
+---
+
+## �📁 Data Storage Architecture
 
 ### Where Your Data Lives (on your SSD):
 
@@ -44,9 +82,9 @@ sudo mkdir -p /opt/shoppinglist
 cd /opt/shoppinglist
 ```
 
-### 2. Clone your code
+### 2. Clone the repository
 ```bash
-git clone <your-repo> .
+git clone https://github.com/robertobarlocci/shoppinglist.git .
 ```
 
 ### 3. Create .env file
@@ -65,9 +103,10 @@ APP_URL=https://your-domain.com
 DB_PASSWORD=<strong-random-password>
 ```
 
-### 4. Start containers
+### 4. Start containers (using pre-built image)
 ```bash
-docker-compose up -d
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### 5. Initialize database (FIRST TIME ONLY)
@@ -78,7 +117,18 @@ docker exec chnubber-app php artisan db:seed --force
 
 ## 🔄 Updating Your Application (Without Data Loss)
 
-### Safe Update Process:
+### Option 1: Automated via GitHub Actions (Recommended)
+
+Simply push to `main` branch:
+```bash
+git add .
+git commit -m "Your changes"
+git push origin main
+```
+
+GitHub Actions will automatically build, push, and deploy the new version.
+
+### Option 2: Manual Update Process
 
 ```bash
 # 1. Navigate to application directory
@@ -90,21 +140,23 @@ cd /opt/shoppinglist
 # 3. Pull latest code
 git pull origin main
 
-# 4. Rebuild containers (data persists in volumes!)
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+# 4. Pull pre-built image from GitHub Container Registry
+docker pull ghcr.io/robertobarlocci/shoppinglist:latest
 
-# 5. Run migrations (safe, won't delete data)
+# 5. Restart containers with new image
+docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml up -d
+
+# 6. Run migrations (safe, won't delete data)
 docker exec chnubber-app php artisan migrate --force
 
-# 6. Clear caches
+# 7. Clear caches
 docker exec chnubber-app php artisan config:cache
 docker exec chnubber-app php artisan route:cache
 docker exec chnubber-app php artisan view:cache
 
-# 7. Verify
-docker-compose ps
+# 8. Verify
+docker compose ps
 ```
 
 **Your data is safe because:**
