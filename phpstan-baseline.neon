@@ -1,0 +1,1129 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Strict comparison using \=\=\= between App\\Enums\\ListType and ''quick_buy'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Actions/Item/CreateItemAction.php
+
+		-
+			message: '#^Instanceof between array and Illuminate\\Http\\Resources\\Json\\ResourceCollection will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Api/ActivityController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\ActivityController\:\:created\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/ActivityController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\ActivityController\:\:error\(\) has parameter \$errors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/ActivityController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\ActivityController\:\:success\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/ActivityController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\ActivityController\:\:validationError\(\) has parameter \$errors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/ActivityController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\CategoryController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/CategoryController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\CategoryController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/CategoryController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\CategoryController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/CategoryController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\CategoryController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/CategoryController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\CategoryController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/CategoryController.php
+
+		-
+			message: '#^Instanceof between array and Illuminate\\Http\\Resources\\Json\\ResourceCollection will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Api/ItemController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\ItemController\:\:created\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/ItemController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\ItemController\:\:error\(\) has parameter \$errors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/ItemController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\ItemController\:\:success\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/ItemController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\ItemController\:\:validationError\(\) has parameter \$errors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/ItemController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\LunchboxController\:\:autocomplete\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/LunchboxController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\LunchboxController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/LunchboxController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\LunchboxController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/LunchboxController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\LunchboxController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/LunchboxController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MealPlan\:\:\$last_used\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MealPlan\:\:\$usage_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanController.php
+
+		-
+			message: '#^Instanceof between array and Illuminate\\Http\\Resources\\Json\\ResourceCollection will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\MealPlanController\:\:created\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\MealPlanController\:\:error\(\) has parameter \$errors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\MealPlanController\:\:success\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\MealPlanController\:\:validationError\(\) has parameter \$errors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\MealPlan\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanController.php
+
+		-
+			message: '#^Return type of call to method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\MealPlan\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: method.unresolvableReturnType
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\MealPlanSuggestionController\:\:approve\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanSuggestionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\MealPlanSuggestionController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanSuggestionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\MealPlanSuggestionController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanSuggestionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\MealPlanSuggestionController\:\:reject\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanSuggestionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\MealPlanSuggestionController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanSuggestionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\MealPlanSuggestionController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/MealPlanSuggestionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\SyncController\:\:sync\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Api/SyncController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Auth\\AuthenticatedSessionController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Auth/AuthenticatedSessionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Auth\\AuthenticatedSessionController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Auth/AuthenticatedSessionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\DashboardController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\DashboardController\:\:lunchbox\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\DashboardController\:\:mealPlanner\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ProfileController\:\:edit\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ProfileController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ProfileController\:\:updatePassword\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ProfileController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between App\\Enums\\ListType and ''inventory'' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Http/Requests/Item/SetRecurringRequest.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Http/Requests/Item/SetRecurringRequest.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$action\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ActivityResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Resources/ActivityResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ActivityResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$icon\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ActivityResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ActivityResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$metadata\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ActivityResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$subject_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ActivityResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$subject_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ActivityResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$subject_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ActivityResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ActivityResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryResource\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryResource\:\:\$icon\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryResource\:\:\$is_default\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryResource\:\:\$items\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryResource\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryResource\:\:\$sort_order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\CategoryResource\:\:relationLoaded\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/CategoryResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$category\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$creator\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$list_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$moved_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$recurringSchedule\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$recurring_source_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ItemResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\ItemResource\:\:isRecurring\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/ItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LunchboxItemResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LunchboxItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LunchboxItemResource\:\:\$date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LunchboxItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LunchboxItemResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LunchboxItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LunchboxItemResource\:\:\$item_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LunchboxItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LunchboxItemResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LunchboxItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LunchboxItemResource\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LunchboxItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LunchboxItemResource\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LunchboxItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanIngredientResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanIngredientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanIngredientResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanIngredientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanIngredientResource\:\:\$item\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanIngredientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanIngredientResource\:\:\$item_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanIngredientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanIngredientResource\:\:\$meal_plan_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanIngredientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanIngredientResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanIngredientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanIngredientResource\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanIngredientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanIngredientResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanIngredientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanResource\:\:\$date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanResource\:\:\$ingredients\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanResource\:\:\$meal_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanResource\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanResource\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$approved_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$approved_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$approver\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$meal_plan_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$meal_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MealPlanSuggestionResource\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MealPlanSuggestionResource.php
+
+		-
+			message: '#^Class App\\Models\\Activity uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Activity.php
+
+		-
+			message: '#^Method App\\Models\\Activity\:\:description\(\) return type with generic class Illuminate\\Database\\Eloquent\\Casts\\Attribute does not specify its types\: TGet, TSet$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Activity.php
+
+		-
+			message: '#^Method App\\Models\\Activity\:\:icon\(\) return type with generic class Illuminate\\Database\\Eloquent\\Casts\\Attribute does not specify its types\: TGet, TSet$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Activity.php
+
+		-
+			message: '#^Method App\\Models\\Activity\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Activity.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\Activity\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/Activity.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Activity.php
+
+		-
+			message: '#^Class App\\Models\\Category uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Category.php
+
+		-
+			message: '#^Method App\\Models\\Category\:\:items\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Category.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\Category\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/Category.php
+
+		-
+			message: '#^Class App\\Models\\Item uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Item.php
+
+		-
+			message: '#^Method App\\Models\\Item\:\:category\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Item.php
+
+		-
+			message: '#^Method App\\Models\\Item\:\:creator\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Item.php
+
+		-
+			message: '#^Method App\\Models\\Item\:\:recurringInstances\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Item.php
+
+		-
+			message: '#^Method App\\Models\\Item\:\:recurringSchedule\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasOne does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Item.php
+
+		-
+			message: '#^Method App\\Models\\Item\:\:recurringSource\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Item.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\Item\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/Item.php
+
+		-
+			message: '#^Method App\\Models\\LunchboxItem\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/LunchboxItem.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\LunchboxItem\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/LunchboxItem.php
+
+		-
+			message: '#^Class App\\Models\\MealPlan uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MealPlan.php
+
+		-
+			message: '#^Method App\\Models\\MealPlan\:\:ingredients\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MealPlan.php
+
+		-
+			message: '#^Method App\\Models\\MealPlan\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MealPlan.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\MealPlan\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/MealPlan.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanIngredient\:\:item\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MealPlanIngredient.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanIngredient\:\:mealPlan\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MealPlanIngredient.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\MealPlanIngredient\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/MealPlanIngredient.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:approver\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:mealPlan\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:scopeApproved\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:scopeApproved\(\) has parameter \$query with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:scopeForWeek\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:scopeForWeek\(\) has parameter \$endDate with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:scopeForWeek\(\) has parameter \$query with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:scopeForWeek\(\) has parameter \$startDate with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:scopePending\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:scopePending\(\) has parameter \$query with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Method App\\Models\\MealPlanSuggestion\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\MealPlanSuggestion\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/MealPlanSuggestion.php
+
+		-
+			message: '#^Cannot call method isToday\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/RecurringSchedule.php
+
+		-
+			message: '#^Class App\\Models\\RecurringSchedule uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/RecurringSchedule.php
+
+		-
+			message: '#^Method App\\Models\\RecurringSchedule\:\:getActiveDays\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/RecurringSchedule.php
+
+		-
+			message: '#^Method App\\Models\\RecurringSchedule\:\:item\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/RecurringSchedule.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\RecurringSchedule\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/RecurringSchedule.php
+
+		-
+			message: '#^Class App\\Models\\User uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:activities\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:children\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:items\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:lunchboxItems\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:mealPlanSuggestions\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:mealPlans\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:parent\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\User\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\User\:\:\$hidden is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$hidden\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Generic type Illuminate\\Contracts\\Pagination\\LengthAwarePaginator\<App\\Models\\Item\> in PHPDoc tag @return does not specify all template types of interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator\: TKey, TValue$#'
+			identifier: generics.lessTypes
+			count: 1
+			path: app/QueryBuilders/ItemQueryBuilder.php
+
+		-
+			message: '#^Method App\\QueryBuilders\\ItemQueryBuilder\:\:paginate\(\) should return Illuminate\\Contracts\\Pagination\\LengthAwarePaginator\<App\\Models\\Item\> but returns Illuminate\\Pagination\\LengthAwarePaginator\<int, App\\Models\\Item\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/QueryBuilders/ItemQueryBuilder.php
+
+		-
+			message: '#^Type App\\Models\\Item in generic type Illuminate\\Contracts\\Pagination\\LengthAwarePaginator\<App\\Models\\Item\> in PHPDoc tag @return is not subtype of template type TKey of \(int\|string\) of interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/QueryBuilders/ItemQueryBuilder.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:handleCreateItem\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:handleCreateItem\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:handleDeleteItem\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:handleDeleteItem\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:handleMoveItem\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:handleMoveItem\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:handleUpdateItem\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:handleUpdateItem\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:processAction\(\) has parameter \$action with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:processAction\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:processOfflineActions\(\) has parameter \$actions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Method App\\Services\\OfflineSyncService\:\:processOfflineActions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between App\\Enums\\ListType and ''quick_buy'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/OfflineSyncService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$category_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/RecurringService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/RecurringService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/RecurringService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/RecurringService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/RecurringService.php
+
+		-
+			message: '#^Method App\\Services\\RecurringService\:\:checkRecurringItems\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/RecurringService.php
+
+		-
+			message: '#^Method App\\Services\\RecurringService\:\:getRecurringItems\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/RecurringService.php
+
+		-
+			message: '#^Method App\\Services\\RecurringService\:\:setRecurringSchedule\(\) has parameter \$days with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/RecurringService.php
