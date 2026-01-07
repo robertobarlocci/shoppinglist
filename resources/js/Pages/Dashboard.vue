@@ -40,6 +40,9 @@
               <span class="text-lg">🍱</span>
             </Link>
 
+            <!-- Activity History (Parent Only) -->
+            <ActivityHistory v-if="$page.props.auth.user.role === 'parent'" />
+
             <!-- Offline indicator -->
             <div v-if="!isOnline" class="text-yellow-500 text-sm hidden sm:block">
               ⚠️ Offline
@@ -407,6 +410,7 @@ import { useItemsStore } from '../Stores/items';
 import { useToast } from '../Composables/useToast';
 import { useTheme } from '../Composables/useTheme';
 import { useOfflineSync } from '../Composables/useOfflineSync';
+import ActivityHistory from '../Components/ActivityHistory.vue';
 
 const props = defineProps({
   categories: Array,
