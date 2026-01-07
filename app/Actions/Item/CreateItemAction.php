@@ -48,7 +48,7 @@ final class CreateItemAction
 
     private function logActivity(Item $item, User $user): void
     {
-        if ($item->list_type === Item::LIST_TYPE_QUICK_BUY) {
+        if ($item->list_type === \App\Enums\ListType::QUICK_BUY) {
             $this->activityLogger->quickBuyAdded($item, $user);
         } else {
             $this->activityLogger->itemAdded($item, $user);

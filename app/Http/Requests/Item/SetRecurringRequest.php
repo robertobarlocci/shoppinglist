@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Item;
 
+use App\Enums\ListType;
 use App\Models\Item;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -17,11 +18,6 @@ final class SetRecurringRequest extends FormRequest
         $item = $this->route('item');
 
         if (! $item instanceof Item) {
-            return false;
-        }
-
-        // Only allow setting recurring on inventory items
-        if ($item->list_type !== Item::LIST_TYPE_INVENTORY) {
             return false;
         }
 
@@ -44,6 +40,20 @@ final class SetRecurringRequest extends FormRequest
             'saturday' => ['boolean'],
             'sunday' => ['boolean'],
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    {
+        $validator->after(function (\Illuminate\Validation\Validator $validator): void {
+            $item = $this->route('item');
+
+            if ($item instanceof Item && $item->list_type !== ListType::INVENTORY) {
+                $validator->errors()->add('item', 'Recurring schedules can only be set on inventory items.');
+            }
+        });
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\ListType;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\User;
@@ -134,9 +135,13 @@ final class ItemTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'grouped',
-                'total',
+                'data' => [
+                    '*' => ['id', 'name', 'category'],
+                ],
             ]);
+
+        // Verify both items are returned
+        $this->assertCount(2, $response->json('data'));
     }
 
     public function test_quick_buy_item_can_be_created()
@@ -184,8 +189,8 @@ final class ItemTest extends TestCase
 
         // Item should have list_type set to 'trash'
         $trashedItem = Item::withTrashed()->find($item->id);
-        $this->assertEquals(Item::LIST_TYPE_TRASH, $trashedItem->list_type);
-        $this->assertEquals(Item::LIST_TYPE_TO_BUY, $trashedItem->deleted_from);
+        $this->assertEquals(ListType::TRASH, $trashedItem->list_type);
+        $this->assertEquals(ListType::TO_BUY->value, $trashedItem->deleted_from);
     }
 
     public function test_trash_list_returns_soft_deleted_items()
@@ -236,7 +241,7 @@ final class ItemTest extends TestCase
         // Item should be restored to original list type
         $restoredItem = Item::find($item->id);
         $this->assertNotNull($restoredItem);
-        $this->assertEquals(Item::LIST_TYPE_TO_BUY, $restoredItem->list_type);
+        $this->assertEquals(ListType::TO_BUY, $restoredItem->list_type);
         $this->assertNull($restoredItem->deleted_from);
         $this->assertNull($restoredItem->deleted_at);
     }
@@ -258,8 +263,8 @@ final class ItemTest extends TestCase
         // Item should be soft deleted with correct metadata
         $trashedItem = Item::withTrashed()->find($item->id);
         $this->assertNotNull($trashedItem->deleted_at);
-        $this->assertEquals(Item::LIST_TYPE_TRASH, $trashedItem->list_type);
-        $this->assertEquals(Item::LIST_TYPE_INVENTORY, $trashedItem->deleted_from);
+        $this->assertEquals(ListType::TRASH, $trashedItem->list_type);
+        $this->assertEquals(ListType::INVENTORY->value, $trashedItem->deleted_from);
     }
 
     public function test_force_delete_permanently_removes_item()

@@ -1,12 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Strict comparison using \=\=\= between App\\Enums\\ListType and ''quick_buy'' will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: app/Actions/Item/CreateItemAction.php
-
-		-
 			message: '#^Instanceof between array and Illuminate\\Http\\Resources\\Json\\ResourceCollection will always evaluate to false\.$#'
 			identifier: instanceof.alwaysFalse
 			count: 1
@@ -257,18 +251,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: app/Http/Controllers/ProfileController.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between App\\Enums\\ListType and ''inventory'' will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: app/Http/Requests/Item/SetRecurringRequest.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 1
-			path: app/Http/Requests/Item/SetRecurringRequest.php
 
 		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\ActivityResource\:\:\$action\.$#'
