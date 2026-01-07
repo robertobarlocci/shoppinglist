@@ -1,10 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
-class Handler extends ExceptionHandler
+final class Handler extends ExceptionHandler
 {
     /**
      * A list of exception types with their corresponding custom log levels.
@@ -21,7 +30,7 @@ class Handler extends ExceptionHandler
      * @var array<int, class-string<\Throwable>>
      */
     protected $dontReport = [
-        //
+        SyncConflictException::class,
     ];
 
     /**
@@ -40,8 +49,46 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->reportable(function (\Throwable $e) {
+        $this->reportable(function (Throwable $e) {
             //
+        });
+
+        $this->renderable(function (SyncConflictException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'conflicts' => $e->getConflicts(),
+                ], 409);
+            }
+        });
+
+        $this->renderable(function (ModelNotFoundException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                $model = class_basename($e->getModel());
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => "{$model} nicht gefunden.",
+                ], 404);
+            }
+        });
+
+        $this->renderable(function (NotFoundHttpException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Ressource nicht gefunden.',
+                ], 404);
+            }
+        });
+
+        $this->renderable(function (AuthenticationException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Nicht authentifiziert.',
+                ], 401);
+            }
         });
     }
 }

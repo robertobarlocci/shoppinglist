@@ -1,5 +1,9 @@
 FROM php:8.3-fpm-alpine
 
+# Build arguments for flexibility
+ARG PHP_VERSION=8.3
+ARG NODE_VERSION=20
+
 # Set working directory
 WORKDIR /var/www
 
@@ -15,7 +19,8 @@ RUN apk add --no-cache \
     postgresql-dev \
     nodejs \
     npm \
-    supervisor
+    supervisor \
+    fcgi
 
 # Install PHP extensions
 RUN docker-php-ext-install \
@@ -33,7 +38,13 @@ RUN docker-php-ext-install \
 # Install Redis extension
 RUN apk add --no-cache pcre-dev $PHPIZE_DEPS \
     && pecl install redis \
-    && docker-php-ext-enable redis
+    && docker-php-ext-enable redis \
+    && apk del pcre-dev $PHPIZE_DEPS
+
+# Install php-fpm-healthcheck
+RUN wget -O /usr/local/bin/php-fpm-healthcheck \
+    https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
+    && chmod +x /usr/local/bin/php-fpm-healthcheck
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -44,6 +55,9 @@ RUN addgroup -g 1000 www && \
 
 # Copy existing application directory permissions
 COPY --chown=www:www . /var/www
+
+# Copy PHP-FPM configuration for health checks
+COPY docker/php/www.conf /usr/local/etc/php-fpm.d/zz-docker.conf
 
 # Change current user to www
 USER www

@@ -27,7 +27,20 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\RestrictKidsAccess::class,
         ]);
 
-        // Disable CSRF for API routes since Sanctum handles authentication
+        // CSRF Protection Configuration
+        // Note: CSRF is disabled for API routes because we use Sanctum's token-based
+        // authentication for the SPA. Sanctum handles API authentication via cookies
+        // (EnsureFrontendRequestsAreStateful) which includes CSRF protection through
+        // the session cookie. The sanctum/csrf-cookie endpoint must be called first
+        // to get the CSRF token which axios includes automatically.
+        // 
+        // SECURITY CONSIDERATION: If moving to a purely stateless API with Bearer tokens,
+        // this configuration is correct. However, the current setup uses cookie-based
+        // auth (withCredentials: true), so ensure the frontend calls /sanctum/csrf-cookie
+        // before making mutating requests.
+        //
+        // For stricter security with cookie auth, consider:
+        // $middleware->validateCsrfTokens(except: ['sanctum/csrf-cookie']);
         $middleware->validateCsrfTokens(except: [
             'api/*',
         ]);

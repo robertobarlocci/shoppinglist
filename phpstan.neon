@@ -1,0 +1,27 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+
+    # Level 6 is a good balance for new projects
+    # Increase to 8 or 9 for maximum type safety
+    level: 6
+
+    # Ignore specific errors if needed
+    ignoreErrors:
+        # Allow dynamic properties on Request
+        - '#Access to an undefined property Illuminate\\Http\\Request::\$\w+#'
+
+    # Exclude specific directories
+    excludePaths:
+        - app/Console/Kernel.php
+        - app/Exceptions/Handler.php
+
+    # Report unmatched ignored errors
+    reportUnmatchedIgnoredErrors: false
+
+    # Check missing typehints
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false

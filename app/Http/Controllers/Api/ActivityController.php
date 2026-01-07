@@ -1,20 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ActivityResource;
+use App\Http\Traits\ApiResponse;
 use App\Models\Activity;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-class ActivityController extends Controller
+final class ActivityController extends Controller
 {
+    use ApiResponse;
+
     /**
      * Display a listing of activities.
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $perPage = $request->query('per_page', 50);
+        $defaultPerPage = config('shoppinglist.pagination.activities_per_page', 50);
+        $maxPerPage = config('shoppinglist.pagination.max_per_page', 100);
+
+        // Clamp per_page to configured limits
+        $perPage = min(max((int) $request->query('per_page', $defaultPerPage), 1), $maxPerPage);
 
         $activities = Activity::with('user')
             ->orderBy('created_at', 'desc')
@@ -26,7 +37,7 @@ class ActivityController extends Controller
     /**
      * Get recent unread activities.
      */
-    public function unread(Request $request)
+    public function unread(): AnonymousResourceCollection
     {
         // For simplicity, return last 10 activities created in the last hour
         // In a full implementation, you'd track read status per user
@@ -44,9 +55,9 @@ class ActivityController extends Controller
      * Note: This is a placeholder. In a full implementation,
      * you'd have a pivot table to track read status per user.
      */
-    public function markAsRead(Request $request)
+    public function markAsRead(): JsonResponse
     {
         // Placeholder implementation
-        return response()->json(['message' => 'Aktivitäten als gelesen markiert']);
+        return $this->success(message: 'Aktivitäten als gelesen markiert');
     }
 }

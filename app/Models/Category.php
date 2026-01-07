@@ -1,12 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Category extends Model
+/**
+ * @property int $id
+ * @property string $slug
+ * @property string $name
+ * @property string|null $color
+ * @property string|null $icon
+ * @property bool $is_default
+ * @property int $sort_order
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Item> $items
+ */
+final class Category extends Model
 {
     use HasFactory;
 
@@ -61,24 +74,33 @@ class Category extends Model
 
     /**
      * Scope a query to only include default categories.
+     *
+     * @param Builder<Category> $query
+     * @return Builder<Category>
      */
-    public function scopeDefault($query)
+    public function scopeDefault(Builder $query): Builder
     {
         return $query->where('is_default', true);
     }
 
     /**
      * Scope a query to only include custom categories.
+     *
+     * @param Builder<Category> $query
+     * @return Builder<Category>
      */
-    public function scopeCustom($query)
+    public function scopeCustom(Builder $query): Builder
     {
         return $query->where('is_default', false);
     }
 
     /**
      * Scope a query to order by sort order.
+     *
+     * @param Builder<Category> $query
+     * @return Builder<Category>
      */
-    public function scopeOrdered($query)
+    public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('sort_order')->orderBy('name');
     }

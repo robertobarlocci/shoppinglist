@@ -15,6 +15,7 @@ class OfflineSyncService
 
     /**
      * Process offline actions that were queued on the client.
+     * Handles partial failures gracefully - successful actions commit even if others fail.
      *
      * @param array $actions Array of offline actions
      * @param User $user The user performing the sync
@@ -26,33 +27,46 @@ class OfflineSyncService
             'success' => [],
             'conflicts' => [],
             'errors' => [],
+            'synced_ids' => [], // Track which client-side action IDs were successfully synced
         ];
 
-        DB::beginTransaction();
+        foreach ($actions as $action) {
+            // Process each action in its own transaction for partial failure handling
+            DB::beginTransaction();
 
-        try {
-            foreach ($actions as $action) {
+            try {
                 $result = $this->processAction($action, $user);
 
                 if ($result['status'] === 'success') {
                     $results['success'][] = $result;
+                    // Track the client-side action ID for cleanup
+                    if (isset($action['id'])) {
+                        $results['synced_ids'][] = $action['id'];
+                    }
+                    DB::commit();
                 } elseif ($result['status'] === 'conflict') {
                     $results['conflicts'][] = $result;
+                    // Conflicts don't rollback - they're informational
+                    DB::commit();
                 } else {
                     $results['errors'][] = $result;
+                    DB::rollBack();
                 }
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Offline sync action failed', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                    'action' => $action,
+                ]);
+
+                $results['errors'][] = [
+                    'status' => 'error',
+                    'action' => $action['type'] ?? 'unknown',
+                    'message' => $e->getMessage(),
+                    'action_id' => $action['id'] ?? null,
+                ];
             }
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Offline sync failed', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-                'actions' => $actions,
-            ]);
-
-            throw $e;
         }
 
         return $results;

@@ -1,33 +1,43 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
+use App\Actions\MealPlan\AddIngredientsToShoppingListAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\MealPlan\AddIngredientRequest;
+use App\Http\Requests\MealPlan\StoreMealPlanRequest;
+use App\Http\Requests\MealPlan\UpdateMealPlanRequest;
 use App\Http\Resources\MealPlanResource;
+use App\Http\Traits\ApiResponse;
 use App\Models\MealPlan;
 use App\Models\MealPlanIngredient;
-use App\Models\Item;
-use App\Models\Category;
 use App\Services\ActivityLogger;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
-class MealPlanController extends Controller
+final class MealPlanController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
-        private ActivityLogger $activityLogger
+        private readonly ActivityLogger $activityLogger,
+        private readonly AddIngredientsToShoppingListAction $addIngredientsAction,
     ) {}
 
     /**
      * Get meal plans for a specific week.
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', MealPlan::class);
 
         $validated = $request->validate([
-            'start_date' => 'nullable|date',
+            'start_date' => ['nullable', 'date'],
         ]);
 
         // Get start of week (Monday) from provided date or current week
@@ -37,7 +47,6 @@ class MealPlanController extends Controller
 
         $endDate = $startDate->copy()->endOfWeek();
 
-        // All users share the same meal plans
         $mealPlans = MealPlan::with('ingredients.item')
             ->whereBetween('date', [$startDate, $endDate])
             ->orderBy('date')
@@ -55,67 +64,44 @@ class MealPlanController extends Controller
     /**
      * Store a newly created meal plan (or update if exists for same date/meal_type).
      */
-    public function store(Request $request)
+    public function store(StoreMealPlanRequest $request): MealPlanResource
     {
-        $this->authorize('create', MealPlan::class);
+        $mealPlan = DB::transaction(function () use ($request): MealPlan {
+            $validated = $request->validated();
 
-        $validated = $request->validate([
-            'date' => 'required|date',
-            'meal_type' => 'required|in:breakfast,lunch,zvieri,dinner',
-            'title' => 'required|string|max:255',
-        ]);
-
-        DB::beginTransaction();
-
-        try {
-            // Use updateOrCreate to prevent duplicates for same date/meal_type (meals are shared)
             $mealPlan = MealPlan::updateOrCreate(
                 [
                     'date' => $validated['date'],
                     'meal_type' => $validated['meal_type'],
                 ],
                 [
-                    'user_id' => auth()->id(),
+                    'user_id' => $request->user()->id,
                     'title' => $validated['title'],
                 ]
             );
 
-            // Log activity
-            $this->activityLogger->mealPlanCreated($mealPlan, auth()->user());
+            $this->activityLogger->mealPlanCreated($mealPlan, $request->user());
 
-            DB::commit();
+            return $mealPlan;
+        });
 
-            return new MealPlanResource($mealPlan->load('ingredients'));
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return new MealPlanResource($mealPlan->load('ingredients'));
     }
 
     /**
      * Display the specified meal plan.
      */
-    public function show(MealPlan $mealPlan)
+    public function show(MealPlan $mealPlan): MealPlanResource
     {
-        // Meals are shared between all users
         return new MealPlanResource($mealPlan->load('ingredients.item'));
     }
 
     /**
      * Update the specified meal plan.
      */
-    public function update(Request $request, MealPlan $mealPlan)
+    public function update(UpdateMealPlanRequest $request, MealPlan $mealPlan): MealPlanResource
     {
-        $this->authorize('update', $mealPlan);
-
-        // Meals are shared between all users
-        $validated = $request->validate([
-            'date' => 'sometimes|required|date',
-            'meal_type' => 'sometimes|required|in:breakfast,lunch,zvieri,dinner',
-            'title' => 'sometimes|required|string|max:255',
-        ]);
-
-        $mealPlan->update($validated);
+        $mealPlan->update($request->validated());
 
         return new MealPlanResource($mealPlan->load('ingredients'));
     }
@@ -123,130 +109,75 @@ class MealPlanController extends Controller
     /**
      * Remove the specified meal plan.
      */
-    public function destroy(MealPlan $mealPlan)
+    public function destroy(MealPlan $mealPlan): JsonResponse
     {
         $this->authorize('delete', $mealPlan);
 
-        // Meals are shared between all users
         $mealPlan->delete();
 
-        return response()->json(['message' => 'Meal plan deleted']);
+        return $this->success(message: 'Meal plan deleted');
     }
 
     /**
      * Add an ingredient to a meal plan.
      */
-    public function addIngredient(Request $request, MealPlan $mealPlan)
+    public function addIngredient(AddIngredientRequest $request, MealPlan $mealPlan): JsonResponse
     {
-        $this->authorize('update', $mealPlan);
+        $ingredient = $mealPlan->ingredients()->create($request->validated());
 
-        // Meals are shared between all users
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'quantity' => 'nullable|string|max:100',
-            'item_id' => 'nullable|exists:items,id',
-        ]);
-
-        $ingredient = $mealPlan->ingredients()->create($validated);
-
-        return response()->json([
-            'ingredient' => $ingredient->load('item'),
-            'message' => 'Ingredient added',
-        ]);
+        return $this->success(
+            data: ['ingredient' => $ingredient->load('item')],
+            message: 'Ingredient added'
+        );
     }
 
     /**
      * Remove an ingredient from a meal plan.
      */
-    public function removeIngredient(MealPlan $mealPlan, MealPlanIngredient $ingredient)
+    public function removeIngredient(MealPlan $mealPlan, MealPlanIngredient $ingredient): JsonResponse
     {
         $this->authorize('update', $mealPlan);
 
-        // Ensure ingredient belongs to this meal plan
         if ($ingredient->meal_plan_id !== $mealPlan->id) {
-            abort(403, 'Unauthorized');
+            return $this->forbidden('Ingredient does not belong to this meal plan');
         }
 
         $ingredient->delete();
 
-        return response()->json(['message' => 'Ingredient removed']);
+        return $this->success(message: 'Ingredient removed');
     }
 
     /**
      * Add all ingredients from a meal plan to the shopping list.
      */
-    public function addIngredientsToShoppingList(MealPlan $mealPlan)
+    public function addIngredientsToShoppingList(MealPlan $mealPlan): JsonResponse
     {
         $this->authorize('update', $mealPlan);
 
-        // Meals are shared between all users
-        DB::beginTransaction();
+        $result = $this->addIngredientsAction->execute($mealPlan, auth()->user());
 
-        try {
-            $ingredients = $mealPlan->ingredients;
-            $addedCount = 0;
-
-            foreach ($ingredients as $ingredient) {
-                // Check if item already exists in to_buy list
-                $existingItem = Item::where('name', $ingredient->name)
-                    ->where('list_type', Item::LIST_TYPE_TO_BUY)
-                    ->whereNull('deleted_at')
-                    ->first();
-
-                if (!$existingItem) {
-                    // Get default category if ingredient has no linked item
-                    $categoryId = null;
-                    if ($ingredient->item_id) {
-                        $categoryId = $ingredient->item->category_id;
-                    } else {
-                        $categoryId = Category::where('slug', 'other')->first()?->id;
-                    }
-
-                    // Create new item in shopping list
-                    Item::create([
-                        'name' => $ingredient->name,
-                        'quantity' => $ingredient->quantity,
-                        'category_id' => $categoryId,
-                        'list_type' => Item::LIST_TYPE_TO_BUY,
-                        'created_by' => auth()->id(),
-                    ]);
-
-                    $addedCount++;
-                }
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'message' => "$addedCount ingredients added to shopping list",
-                'added_count' => $addedCount,
-                'total_ingredients' => $ingredients->count(),
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->success(
+            data: $result,
+            message: "{$result['added_count']} ingredients added to shopping list"
+        );
     }
 
     /**
      * Get meal title suggestions for autocomplete.
-     * Searches all meals (shared between all users).
      */
-    public function suggestMeals(Request $request)
+    public function suggestMeals(Request $request): JsonResponse
     {
-        $query = $request->query('q');
+        $query = (string) $request->query('q', '');
 
         if (strlen($query) < 2) {
             return response()->json([]);
         }
 
-        // Get distinct meal titles that match the query (all meals are shared)
         $meals = MealPlan::where('title', 'ILIKE', "%{$query}%")
             ->select('title')
             ->groupBy('title')
-            ->orderByRaw('COUNT(*) DESC') // Most frequently used first
+            ->orderByRaw('COUNT(*) DESC')
             ->limit(10)
-            ->get()
             ->pluck('title');
 
         return response()->json($meals);
@@ -254,22 +185,20 @@ class MealPlanController extends Controller
 
     /**
      * Get all unique meals for the meals library.
-     * All meals are shared between all users.
      */
-    public function getMealsLibrary()
+    public function getMealsLibrary(): JsonResponse
     {
-        // Get distinct meals with metadata (all meals are shared)
-        $meals = MealPlan::select('title', DB::raw('COUNT(*) as usage_count'), DB::raw('MAX(created_at) as last_used'))
+        $meals = MealPlan::select('title')
+            ->selectRaw('COUNT(*) as usage_count')
+            ->selectRaw('MAX(created_at) as last_used')
             ->groupBy('title')
             ->orderBy('last_used', 'desc')
             ->get()
-            ->map(function ($meal) {
-                return [
-                    'title' => $meal->title,
-                    'usage_count' => $meal->usage_count,
-                    'last_used' => $meal->last_used,
-                ];
-            });
+            ->map(fn ($meal) => [
+                'title' => $meal->title,
+                'usage_count' => $meal->usage_count,
+                'last_used' => $meal->last_used,
+            ]);
 
         return response()->json($meals);
     }

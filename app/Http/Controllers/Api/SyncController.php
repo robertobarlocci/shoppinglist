@@ -19,6 +19,7 @@ class SyncController extends Controller
     {
         $validated = $request->validate([
             'actions' => 'required|array',
+            'actions.*.id' => 'nullable|integer', // Client-side action ID for tracking
             'actions.*.type' => 'required|string',
             'actions.*.data' => 'required|array',
             'actions.*.timestamp' => 'nullable|string',
@@ -35,6 +36,8 @@ class SyncController extends Controller
             'synced_count' => count($results['success']),
             'conflict_count' => count($results['conflicts']),
             'error_count' => count($results['errors']),
+            'synced_ids' => $results['synced_ids'] ?? [],
+            'conflicts' => $results['conflicts'] ?? [],
         ]);
     }
 }

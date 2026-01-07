@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Dexie from 'dexie';
 import axios from 'axios';
 
@@ -15,6 +15,7 @@ export function useOfflineSync() {
     const isSyncing = ref(false);
     const syncError = ref(null);
     const pendingCount = ref(0);
+    const lastSyncConflicts = ref([]);
 
     const updateOnlineStatus = () => {
         isOnline.value = navigator.onLine;
@@ -37,6 +38,16 @@ export function useOfflineSync() {
         await updatePendingCount();
     };
 
+    /**
+     * Clear only specific action IDs that were successfully synced.
+     */
+    const clearSyncedActions = async (syncedIds) => {
+        if (syncedIds.length > 0) {
+            await db.pendingActions.bulkDelete(syncedIds);
+            await updatePendingCount();
+        }
+    };
+
     const updatePendingCount = async () => {
         pendingCount.value = await db.pendingActions.count();
     };
@@ -48,6 +59,7 @@ export function useOfflineSync() {
 
         isSyncing.value = true;
         syncError.value = null;
+        lastSyncConflicts.value = [];
 
         try {
             const actions = await getPendingActions();
@@ -59,10 +71,19 @@ export function useOfflineSync() {
 
             const response = await axios.post('/api/sync', { actions });
 
-            const { synced_count, conflict_count, error_count } = response.data;
+            const { synced_count, conflict_count, error_count, synced_ids = [], conflicts = [] } = response.data;
 
-            // Clear successfully synced actions
-            if (synced_count > 0) {
+            // Store conflicts for UI resolution
+            if (conflicts.length > 0) {
+                lastSyncConflicts.value = conflicts;
+            }
+
+            // Only clear actions that were successfully synced (by ID)
+            // If synced_ids is provided, use it; otherwise fall back to clearing all if no conflicts/errors
+            if (synced_ids.length > 0) {
+                await clearSyncedActions(synced_ids);
+            } else if (conflict_count === 0 && error_count === 0) {
+                // Fallback: clear all if there were no conflicts or errors
                 await clearPendingActions();
             }
 
@@ -73,6 +94,7 @@ export function useOfflineSync() {
                 synced: synced_count,
                 conflicts: conflict_count,
                 errors: error_count,
+                conflictDetails: conflicts,
                 message: `${synced_count} Änderungen synchronisiert`,
             };
         } catch (error) {
@@ -107,16 +129,32 @@ export function useOfflineSync() {
         return await db.categories.toArray();
     };
 
+    // Store event handlers for cleanup
+    let onlineHandler = null;
+    let offlineHandler = null;
+
     onMounted(() => {
-        window.addEventListener('online', () => {
+        onlineHandler = () => {
             updateOnlineStatus();
             // Auto-sync when coming back online
             setTimeout(() => syncPendingActions(), 1000);
-        });
+        };
+        offlineHandler = updateOnlineStatus;
 
-        window.addEventListener('offline', updateOnlineStatus);
+        window.addEventListener('online', onlineHandler);
+        window.addEventListener('offline', offlineHandler);
 
         updatePendingCount();
+    });
+
+    onUnmounted(() => {
+        // Clean up event listeners to prevent memory leaks
+        if (onlineHandler) {
+            window.removeEventListener('online', onlineHandler);
+        }
+        if (offlineHandler) {
+            window.removeEventListener('offline', offlineHandler);
+        }
     });
 
     return {
@@ -124,12 +162,14 @@ export function useOfflineSync() {
         isSyncing,
         syncError,
         pendingCount,
+        lastSyncConflicts,
         addPendingAction,
         syncPendingActions,
         cacheItem,
         getCachedItems,
         cacheCategory,
         getCachedCategories,
+        clearSyncedActions,
         db,
     };
 }

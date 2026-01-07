@@ -1,114 +1,96 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Item\CreateItemAction;
+use App\Actions\Item\MoveItemAction;
+use App\Enums\ListType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Item\MoveItemRequest;
+use App\Http\Requests\Item\SetRecurringRequest;
+use App\Http\Requests\Item\StoreItemRequest;
+use App\Http\Requests\Item\UpdateItemRequest;
 use App\Http\Resources\ItemResource;
+use App\Http\Traits\ApiResponse;
 use App\Models\Item;
-use App\Models\Category;
 use App\Services\ActivityLogger;
 use App\Services\RecurringService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-class ItemController extends Controller
+final class ItemController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
-        private ActivityLogger $activityLogger,
-        private RecurringService $recurringService
+        private readonly ActivityLogger $activityLogger,
+        private readonly RecurringService $recurringService,
+        private readonly CreateItemAction $createItemAction,
+        private readonly MoveItemAction $moveItemAction,
     ) {}
 
     /**
      * Display a listing of items.
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $listType = $request->query('list_type');
 
-        $query = Item::with(['category', 'creator', 'recurringSchedule'])
-            ->when($listType, function ($q) use ($listType) {
-                return $q->where('list_type', $listType);
-            })
-            ->when(!$listType, function ($q) {
-                // Exclude trash by default
-                return $q->whereNull('deleted_at');
-            })
-            ->orderBy('created_at', 'desc');
+        // Handle trash separately - query soft-deleted items
+        if ($listType === ListType::TRASH->value) {
+            $items = Item::onlyTrashed()
+                ->with(['category', 'creator', 'recurringSchedule'])
+                ->orderBy('deleted_at', 'desc')
+                ->get();
 
-        // Handle trash separately with soft deletes
-        if ($listType === 'trash') {
-            $query->onlyTrashed();
+            return ItemResource::collection($items);
         }
 
-        $items = $query->get();
+        // Regular query for non-trash items (automatically excludes soft-deleted)
+        $items = Item::with(['category', 'creator', 'recurringSchedule'])
+            ->when($listType, fn ($q) => $q->where('list_type', $listType))
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        // Always return consistent array format
         return ItemResource::collection($items);
     }
 
     /**
      * Store a newly created item.
      */
-    public function store(Request $request)
+    public function store(StoreItemRequest $request): ItemResource
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'quantity' => 'nullable|string|max:100',
-            'category_id' => 'nullable|exists:categories,id',
-            'list_type' => 'required|in:quick_buy,to_buy,inventory',
-        ]);
+        $item = $this->createItemAction->execute(
+            $request->validated(),
+            $request->user()
+        );
 
-        DB::beginTransaction();
-
-        try {
-            // Get default category if none provided
-            if (!isset($validated['category_id'])) {
-                $validated['category_id'] = Category::where('slug', 'other')->first()?->id;
-            }
-
-            $item = Item::create([
-                ...$validated,
-                'created_by' => auth()->id(),
-            ]);
-
-            // Log activity
-            if ($item->list_type === Item::LIST_TYPE_QUICK_BUY) {
-                $this->activityLogger->quickBuyAdded($item, auth()->user());
-            } else {
-                $this->activityLogger->itemAdded($item, auth()->user());
-            }
-
-            DB::commit();
-
-            return new ItemResource($item->load(['category', 'creator']));
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return new ItemResource($item);
     }
 
     /**
      * Display the specified item.
      */
-    public function show(Item $item)
+    public function show(Item $item): ItemResource
     {
+        $this->authorize('view', $item);
+
         return new ItemResource($item->load(['category', 'creator', 'recurringSchedule']));
     }
 
     /**
      * Update the specified item.
+    /**
+     * Update the specified item.
      */
-    public function update(Request $request, Item $item)
+    public function update(UpdateItemRequest $request, Item $item): ItemResource
     {
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'quantity' => 'nullable|string|max:100',
-            'category_id' => 'nullable|exists:categories,id',
-        ]);
+        $item->update($request->validated());
 
-        $item->update($validated);
-
-        $this->activityLogger->itemEdited($item, auth()->user(), $validated);
+        $this->activityLogger->itemEdited($item, $request->user(), $request->validated());
 
         return new ItemResource($item->load(['category', 'creator']));
     }
@@ -116,84 +98,52 @@ class ItemController extends Controller
     /**
      * Move item to trash (soft delete).
      */
-    public function destroy(Item $item)
+    public function destroy(Item $item): JsonResponse
     {
+        $this->authorize('delete', $item);
+
         $item->moveToTrash();
 
         $this->activityLogger->itemDeleted($item, auth()->user());
 
-        return response()->json(['message' => 'Item moved to trash']);
+        return $this->success(message: 'Item moved to trash');
     }
 
     /**
      * Move item between lists.
      */
-    public function move(Request $request, Item $item)
+    public function move(MoveItemRequest $request, Item $item): ItemResource|JsonResponse
     {
-        $validated = $request->validate([
-            'to_list' => 'required|in:quick_buy,to_buy,inventory,trash',
-        ]);
+        $result = $this->moveItemAction->execute(
+            $item,
+            $request->toList(),
+            $request->user()
+        );
 
-        $fromList = $item->list_type;
-        $toList = $validated['to_list'];
-
-        // Handle recurring items
-        if ($item->isRecurring() && $toList === Item::LIST_TYPE_INVENTORY) {
-            // Recurring items should be deleted when checked, not moved
-            $item->delete();
-            $this->activityLogger->itemChecked($item, auth()->user());
-
-            return response()->json(['message' => 'Recurring item completed']);
+        if ($result['item'] === null) {
+            return $this->success(message: $result['message']);
         }
 
-        DB::beginTransaction();
-
-        try {
-            // Check for duplicates when moving to inventory
-            if ($toList === Item::LIST_TYPE_INVENTORY) {
-                $existingItem = Item::where('list_type', Item::LIST_TYPE_INVENTORY)
-                    ->whereRaw('LOWER(name) = ?', [strtolower($item->name)])
-                    ->where('id', '!=', $item->id)
-                    ->first();
-
-                if ($existingItem) {
-                    // Duplicate found - delete the item being moved and return existing
-                    $itemName = $item->name;
-                    $item->forceDelete();
-                    $this->activityLogger->itemChecked($existingItem, auth()->user());
-
-                    DB::commit();
-
-                    return response()->json([
-                        'message' => "'{$itemName}' bereits im Inventar vorhanden",
-                        'data' => new ItemResource($existingItem->fresh(['category', 'creator', 'recurringSchedule'])),
-                        'deduplication' => true,
-                    ]);
-                }
-            }
-
-            $item->moveTo($toList);
-
-            // Log activity
-            if ($toList === Item::LIST_TYPE_INVENTORY) {
-                $this->activityLogger->itemChecked($item, auth()->user());
-            }
-
-            DB::commit();
-
-            return new ItemResource($item->fresh(['category', 'creator']));
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
+        if ($result['deduplication']) {
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
+                'data' => new ItemResource($result['item']),
+                'deduplication' => true,
+            ]);
         }
+
+        return new ItemResource($result['item']);
     }
 
     /**
      * Restore item from trash.
      */
-    public function restore($id)
+    public function restore(int $id): ItemResource
     {
         $item = Item::onlyTrashed()->findOrFail($id);
+
+        $this->authorize('restore', $item);
 
         $item->restoreFromTrash();
 
@@ -205,42 +155,53 @@ class ItemController extends Controller
     /**
      * Permanently delete item from trash.
      */
-    public function forceDelete($id)
+    public function forceDelete(int $id): JsonResponse
     {
         $item = Item::onlyTrashed()->findOrFail($id);
 
+        $this->authorize('forceDelete', $item);
+
         $item->forceDelete();
 
-        return response()->json(['message' => 'Item permanently deleted']);
+        return $this->success(message: 'Item permanently deleted');
     }
 
     /**
      * Search items for autocomplete (Smart Input).
      * Returns unique item names from all lists for better suggestions.
      */
-    public function suggest(Request $request)
+    public function suggest(Request $request): AnonymousResourceCollection|JsonResponse
     {
-        $query = $request->query('q', '');
+        $query = (string) $request->query('q', '');
+        $minLength = config('shoppinglist.suggestions.min_query_length', 2);
+        $maxResults = config('shoppinglist.suggestions.max_results', 10);
 
-        if (strlen($query) < 2) {
+        if (strlen($query) < $minLength) {
             return response()->json([]);
         }
 
-        // Search across all item types (not just inventory) and get unique names
-        $items = Item::where('name', 'ILIKE', "%{$query}%")
+        // Use DISTINCT at database level for better performance
+        $items = Item::select('items.*')
+            ->whereIn('id', function ($subquery) use ($query) {
+                $subquery->selectRaw('MIN(id)')
+                    ->from('items')
+                    ->where('name', 'ILIKE', "%{$query}%")
+                    ->whereNull('deleted_at')
+                    ->groupBy('name');
+            })
             ->with('category')
             ->orderByRaw("CASE
-                WHEN list_type = 'inventory' THEN 1
-                WHEN list_type = 'to_buy' THEN 2
-                WHEN list_type = 'quick_buy' THEN 3
+                WHEN list_type = ? THEN 1
+                WHEN list_type = ? THEN 2
+                WHEN list_type = ? THEN 3
                 ELSE 4
-            END")
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get()
-            // Group by name to get unique suggestions
-            ->unique('name')
-            ->take(5);
+            END", [
+                ListType::INVENTORY->value,
+                ListType::TO_BUY->value,
+                ListType::QUICK_BUY->value,
+            ])
+            ->limit($maxResults)
+            ->get();
 
         return ItemResource::collection($items);
     }
@@ -248,26 +209,9 @@ class ItemController extends Controller
     /**
      * Set or update recurring schedule for an item.
      */
-    public function setRecurring(Request $request, Item $item)
+    public function setRecurring(SetRecurringRequest $request, Item $item): ItemResource
     {
-        $validated = $request->validate([
-            'monday' => 'boolean',
-            'tuesday' => 'boolean',
-            'wednesday' => 'boolean',
-            'thursday' => 'boolean',
-            'friday' => 'boolean',
-            'saturday' => 'boolean',
-            'sunday' => 'boolean',
-        ]);
-
-        // Only allow setting recurring on inventory items
-        if ($item->list_type !== Item::LIST_TYPE_INVENTORY) {
-            return response()->json([
-                'message' => 'Recurring schedules can only be set on inventory items'
-            ], 422);
-        }
-
-        $schedule = $this->recurringService->setRecurringSchedule($item, $validated);
+        $this->recurringService->setRecurringSchedule($item, $request->scheduleData());
 
         return new ItemResource($item->load(['category', 'creator', 'recurringSchedule']));
     }
@@ -275,8 +219,10 @@ class ItemController extends Controller
     /**
      * Remove recurring schedule from an item.
      */
-    public function removeRecurring(Item $item)
+    public function removeRecurring(Item $item): ItemResource
     {
+        $this->authorize('update', $item);
+
         $this->recurringService->removeRecurringSchedule($item);
 
         return new ItemResource($item->load(['category', 'creator']));

@@ -1,17 +1,41 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use App\Enums\ListType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Item extends Model
+/**
+ * @property int $id
+ * @property string $name
+ * @property int $quantity
+ * @property int|null $category_id
+ * @property ListType $list_type
+ * @property int|null $recurring_source_id
+ * @property string|null $deleted_from
+ * @property int|null $created_by
+ * @property \Carbon\Carbon|null $moved_at
+ * @property \Carbon\Carbon|null $deleted_at
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ * @property-read Category|null $category
+ * @property-read User|null $creator
+ * @property-read RecurringSchedule|null $recurringSchedule
+ * @property-read Item|null $recurringSource
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Item> $recurringInstances
+ */
+final class Item extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -37,6 +61,7 @@ class Item extends Model
     protected function casts(): array
     {
         return [
+            'list_type' => ListType::class,
             'moved_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
@@ -44,11 +69,13 @@ class Item extends Model
 
     /**
      * List type constants.
+     *
+     * @deprecated Use ListType enum instead
      */
-    const LIST_TYPE_QUICK_BUY = 'quick_buy';
-    const LIST_TYPE_TO_BUY = 'to_buy';
-    const LIST_TYPE_INVENTORY = 'inventory';
-    const LIST_TYPE_TRASH = 'trash';
+    public const LIST_TYPE_QUICK_BUY = 'quick_buy';
+    public const LIST_TYPE_TO_BUY = 'to_buy';
+    public const LIST_TYPE_INVENTORY = 'inventory';
+    public const LIST_TYPE_TRASH = 'trash';
 
     /**
      * Get the category that owns the item.
@@ -79,7 +106,7 @@ class Item extends Model
      */
     public function recurringSource(): BelongsTo
     {
-        return $this->belongsTo(Item::class, 'recurring_source_id');
+        return $this->belongsTo(self::class, 'recurring_source_id');
     }
 
     /**
@@ -87,31 +114,51 @@ class Item extends Model
      */
     public function recurringInstances(): HasMany
     {
-        return $this->hasMany(Item::class, 'recurring_source_id');
+        return $this->hasMany(self::class, 'recurring_source_id');
     }
 
     /**
      * Scope a query to only include items in the shopping list.
+     *
+     * @param Builder<Item> $query
+     * @return Builder<Item>
      */
-    public function scopeToBuy($query)
+    public function scopeToBuy(Builder $query): Builder
     {
-        return $query->where('list_type', self::LIST_TYPE_TO_BUY);
+        return $query->where('list_type', ListType::TO_BUY);
     }
 
     /**
      * Scope a query to only include quick buy items.
+     *
+     * @param Builder<Item> $query
+     * @return Builder<Item>
      */
-    public function scopeQuickBuy($query)
+    public function scopeQuickBuy(Builder $query): Builder
     {
-        return $query->where('list_type', self::LIST_TYPE_QUICK_BUY);
+        return $query->where('list_type', ListType::QUICK_BUY);
     }
 
     /**
      * Scope a query to only include inventory items.
+     *
+     * @param Builder<Item> $query
+     * @return Builder<Item>
      */
-    public function scopeInventory($query)
+    public function scopeInventory(Builder $query): Builder
     {
-        return $query->where('list_type', self::LIST_TYPE_INVENTORY);
+        return $query->where('list_type', ListType::INVENTORY);
+    }
+
+    /**
+     * Scope a query to only include trashed items.
+     *
+     * @param Builder<Item> $query
+     * @return Builder<Item>
+     */
+    public function scopeTrash(Builder $query): Builder
+    {
+        return $query->withTrashed()->where('list_type', ListType::TRASH);
     }
 
     /**
@@ -119,7 +166,7 @@ class Item extends Model
      */
     public function isRecurring(): bool
     {
-        return !is_null($this->recurring_source_id);
+        return $this->recurring_source_id !== null;
     }
 
     /**
@@ -131,9 +178,17 @@ class Item extends Model
     }
 
     /**
+     * Check if item is in trash.
+     */
+    public function isInTrash(): bool
+    {
+        return $this->list_type === ListType::TRASH;
+    }
+
+    /**
      * Move item to a different list.
      */
-    public function moveTo(string $listType): self
+    public function moveTo(ListType $listType): self
     {
         $this->list_type = $listType;
         $this->moved_at = now();
@@ -144,10 +199,13 @@ class Item extends Model
 
     /**
      * Move item to trash.
+     * Saves the original list_type, sets list_type to 'trash', and soft deletes.
      */
     public function moveToTrash(): void
     {
-        $this->deleted_from = $this->list_type;
+        $this->deleted_from = $this->list_type->value;
+        $this->list_type = ListType::TRASH;
+        $this->save();
         $this->delete();
     }
 
@@ -157,7 +215,10 @@ class Item extends Model
     public function restoreFromTrash(): void
     {
         $this->restore();
-        $this->list_type = $this->deleted_from ?? self::LIST_TYPE_TO_BUY;
+        $restoredType = $this->deleted_from !== null
+            ? (ListType::tryFrom($this->deleted_from) ?? ListType::TO_BUY)
+            : ListType::TO_BUY;
+        $this->list_type = $restoredType;
         $this->deleted_from = null;
         $this->save();
     }

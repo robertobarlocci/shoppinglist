@@ -1,12 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use App\Enums\ActivityAction;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Activity extends Model
+/**
+ * @property int $id
+ * @property int|null $user_id
+ * @property ActivityAction $action
+ * @property string|null $subject_type
+ * @property int|null $subject_id
+ * @property string|null $subject_name
+ * @property array<string, mixed>|null $metadata
+ * @property \Carbon\Carbon $created_at
+ * @property-read User|null $user
+ * @property-read string $icon
+ * @property-read string $description
+ */
+final class Activity extends Model
 {
     use HasFactory;
 
@@ -39,6 +57,7 @@ class Activity extends Model
     protected function casts(): array
     {
         return [
+            'action' => ActivityAction::class,
             'metadata' => 'array',
             'created_at' => 'datetime',
         ];
@@ -46,17 +65,19 @@ class Activity extends Model
 
     /**
      * Activity action constants.
+     *
+     * @deprecated Use ActivityAction enum instead
      */
-    const ACTION_ITEM_ADDED = 'item_added';
-    const ACTION_QUICK_BUY_ADDED = 'quick_buy_added';
-    const ACTION_ITEM_CHECKED = 'item_checked';
-    const ACTION_ITEM_DELETED = 'item_deleted';
-    const ACTION_ITEM_RESTORED = 'item_restored';
-    const ACTION_ITEM_EDITED = 'item_edited';
-    const ACTION_RECURRING_TRIGGERED = 'recurring_triggered';
-    const ACTION_CATEGORY_CREATED = 'category_created';
-    const ACTION_USER_LOGIN = 'user_login';
-    const ACTION_MEAL_PLAN_CREATED = 'meal_plan_created';
+    public const ACTION_ITEM_ADDED = 'item_added';
+    public const ACTION_QUICK_BUY_ADDED = 'quick_buy_added';
+    public const ACTION_ITEM_CHECKED = 'item_checked';
+    public const ACTION_ITEM_DELETED = 'item_deleted';
+    public const ACTION_ITEM_RESTORED = 'item_restored';
+    public const ACTION_ITEM_EDITED = 'item_edited';
+    public const ACTION_RECURRING_TRIGGERED = 'recurring_triggered';
+    public const ACTION_CATEGORY_CREATED = 'category_created';
+    public const ACTION_USER_LOGIN = 'user_login';
+    public const ACTION_MEAL_PLAN_CREATED = 'meal_plan_created';
 
     /**
      * Get the user who performed the activity.
@@ -69,49 +90,33 @@ class Activity extends Model
     /**
      * Get the icon for this activity action.
      */
-    public function getIconAttribute(): string
+    protected function icon(): Attribute
     {
-        return match($this->action) {
-            self::ACTION_ITEM_ADDED => '🛒',
-            self::ACTION_QUICK_BUY_ADDED => '🔥',
-            self::ACTION_ITEM_CHECKED => '✅',
-            self::ACTION_ITEM_DELETED => '🗑️',
-            self::ACTION_ITEM_RESTORED => '♻️',
-            self::ACTION_ITEM_EDITED => '✏️',
-            self::ACTION_RECURRING_TRIGGERED => '🔄',
-            self::ACTION_CATEGORY_CREATED => '🏷️',
-            self::ACTION_USER_LOGIN => '👤',
-            self::ACTION_MEAL_PLAN_CREATED => '📅',
-            default => '📋',
-        };
+        return Attribute::make(
+            get: fn (): string => $this->action->icon(),
+        );
     }
 
     /**
      * Get a human-readable description of the activity.
      */
-    public function getDescriptionAttribute(): string
+    protected function description(): Attribute
     {
-        $userName = $this->user ? $this->user->name : 'System';
-
-        return match($this->action) {
-            self::ACTION_ITEM_ADDED => "{$userName} hat \"{$this->subject_name}\" zur Einkaufsliste hinzugefügt",
-            self::ACTION_QUICK_BUY_ADDED => "{$userName} hat \"{$this->subject_name}\" als Quick Buy hinzugefügt",
-            self::ACTION_ITEM_CHECKED => "{$userName} hat \"{$this->subject_name}\" abgehakt",
-            self::ACTION_ITEM_DELETED => "{$userName} hat \"{$this->subject_name}\" gelöscht",
-            self::ACTION_ITEM_RESTORED => "{$userName} hat \"{$this->subject_name}\" wiederhergestellt",
-            self::ACTION_ITEM_EDITED => "{$userName} hat \"{$this->subject_name}\" bearbeitet",
-            self::ACTION_RECURRING_TRIGGERED => "Wiederkehrende Artikel automatisch hinzugefügt",
-            self::ACTION_CATEGORY_CREATED => "{$userName} hat die Kategorie \"{$this->subject_name}\" erstellt",
-            self::ACTION_USER_LOGIN => "{$userName} hat sich eingeloggt",
-            self::ACTION_MEAL_PLAN_CREATED => "{$userName} hat \"{$this->subject_name}\" zum Essensplan hinzugefügt",
-            default => $this->action,
-        };
+        return Attribute::make(
+            get: fn (): string => $this->action->description(
+                $this->user?->name ?? 'System',
+                $this->subject_name,
+            ),
+        );
     }
 
     /**
      * Scope a query to only include recent activities.
+     *
+     * @param Builder<Activity> $query
+     * @return Builder<Activity>
      */
-    public function scopeRecent($query, int $limit = 50)
+    public function scopeRecent(Builder $query, int $limit = 50): Builder
     {
         return $query->orderBy('created_at', 'desc')->limit($limit);
     }

@@ -24,8 +24,16 @@ services:
       - REDIS_PASSWORD=null
       - REDIS_PORT=6379
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm-healthcheck || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   nginx:
     image: nginx:alpine
@@ -39,7 +47,14 @@ services:
     networks:
       - shoppinglist-network
     depends_on:
-      - app
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   db:
     image: postgres:16-alpine
@@ -56,6 +71,12 @@ services:
       - "54321:5432"
     networks:
       - shoppinglist-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-shoppinglist} -d ${DB_DATABASE:-shoppinglist}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -67,6 +88,12 @@ services:
       - redis-data:/data
     networks:
       - shoppinglist-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   scheduler:
     build:
@@ -80,9 +107,12 @@ services:
     networks:
       - shoppinglist-network
     depends_on:
-      - app
-      - db
-      - redis
+      app:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     command: php artisan schedule:work
 
   queue:
@@ -97,9 +127,12 @@ services:
     networks:
       - shoppinglist-network
     depends_on:
-      - app
-      - db
-      - redis
+      app:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     command: php artisan queue:work --tries=3 --timeout=60
 
 networks:
