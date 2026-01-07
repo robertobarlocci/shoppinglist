@@ -23,6 +23,7 @@
         "@headlessui/vue": "^1.7.17",
         "@heroicons/vue": "^2.1.1",
         "dexie": "^3.2.4",
-        "workbox-window": "^7.0.0"
+        "workbox-window": "^7.0.0",
+        "ziggy-js": "^2.0.0"
     }
 }

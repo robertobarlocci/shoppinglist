@@ -21,7 +21,3 @@ parameters:
 
     # Report unmatched ignored errors
     reportUnmatchedIgnoredErrors: false
-
-    # Check missing typehints
-    checkMissingIterableValueType: false
-    checkGenericClassInNonGenericObjectType: false
