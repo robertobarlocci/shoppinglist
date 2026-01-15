@@ -31,18 +31,6 @@
               <span class="text-lg">📅</span>
             </Link>
 
-            <!-- Lunchbox -->
-            <Link
-              href="/lunchbox"
-              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-              title="Lunchbox"
-            >
-              <span class="text-lg">🍱</span>
-            </Link>
-
-            <!-- Activity History (Parent Only) -->
-            <ActivityHistory v-if="$page.props.auth.user.role === 'parent'" />
-
             <!-- Offline indicator -->
             <div v-if="!isOnline" class="text-yellow-500 text-sm hidden sm:block">
               ⚠️ Offline
@@ -145,7 +133,7 @@
             />
 
             <!-- Category selector for new items -->
-            <div v-if="searchQuery.length > 0 && suggestions.length === 0" class="flex gap-2">
+            <div v-if="canAddNewItem" class="flex gap-2">
               <select
                 v-model="selectedCategoryForNewItem"
                 class="input flex-1"
@@ -180,7 +168,7 @@
 
           <!-- Add new button -->
           <button
-            v-if="searchQuery.length > 0 && suggestions.length === 0"
+            v-if="canAddNewItem"
             @click="addNewItem"
             class="mt-2 w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
           >
@@ -410,7 +398,6 @@ import { useItemsStore } from '../Stores/items';
 import { useToast } from '../Composables/useToast';
 import { useTheme } from '../Composables/useTheme';
 import { useOfflineSync } from '../Composables/useOfflineSync';
-import ActivityHistory from '../Components/ActivityHistory.vue';
 
 const props = defineProps({
   categories: Array,
@@ -460,6 +447,20 @@ const groupedInventoryItems = computed(() => {
     grouped[categoryName].push(item);
   });
   return grouped;
+});
+
+// Check if the search query exactly matches any suggestion
+const hasExactMatch = computed(() => {
+  if (!searchQuery.value.trim() || suggestions.value.length === 0) {
+    return false;
+  }
+  const query = searchQuery.value.trim().toLowerCase();
+  return suggestions.value.some(item => item.name.toLowerCase() === query);
+});
+
+// Show add new button when there's input but no exact match in suggestions
+const canAddNewItem = computed(() => {
+  return searchQuery.value.length > 0 && !hasExactMatch.value;
 });
 
 onMounted(() => {
