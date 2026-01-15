@@ -21,7 +21,11 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Meal Planner
     Route::get('/meal-planner', [DashboardController::class, 'mealPlanner'])->name('meal-planner');
+
+    // Lunchbox
     Route::get('/lunchbox', [DashboardController::class, 'lunchbox'])->name('lunchbox');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
