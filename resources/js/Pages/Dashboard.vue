@@ -31,6 +31,15 @@
               <span class="text-lg">📅</span>
             </Link>
 
+            <!-- Lunchbox -->
+            <Link
+              href="/lunchbox"
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Lunchbox"
+            >
+              <span class="text-lg">🍱</span>
+            </Link>
+
             <!-- Offline indicator -->
             <div v-if="!isOnline" class="text-yellow-500 text-sm hidden sm:block">
               ⚠️ Offline
@@ -44,6 +53,9 @@
             >
               🔄 {{ pendingCount }} ausstehend
             </button>
+
+            <!-- Activity History -->
+            <ActivityHistory />
 
             <!-- Theme toggle -->
             <button
@@ -402,6 +414,7 @@ import { useItemsStore } from '../Stores/items';
 import { useToast } from '../Composables/useToast';
 import { useTheme } from '../Composables/useTheme';
 import { useOfflineSync } from '../Composables/useOfflineSync';
+import ActivityHistory from '../Components/ActivityHistory.vue';
 
 const props = defineProps({
   categories: Array,
