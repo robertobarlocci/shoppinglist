@@ -210,9 +210,32 @@ export const useItemsStore = defineStore('items', () => {
         }
     };
 
+    // Track in-flight move operations to prevent duplicates
+    const pendingMoves = new Set();
+
     const moveItem = async (id, toList) => {
+        // Prevent duplicate move operations for the same item
+        const moveKey = `${id}-${toList}`;
+        if (pendingMoves.has(moveKey)) {
+            console.log(`Move operation already in progress for item ${id}`);
+            return { data: null, skipped: true };
+        }
+
+        pendingMoves.add(moveKey);
+
         const index = items.value.findIndex(item => item.id === id);
         const originalItem = index !== -1 ? { ...items.value[index] } : null;
+
+        // Early return if item not found or already in target list
+        if (!originalItem) {
+            pendingMoves.delete(moveKey);
+            throw new Error('Item not found');
+        }
+
+        if (originalItem.list_type === toList) {
+            pendingMoves.delete(moveKey);
+            return { data: originalItem, alreadyInList: true };
+        }
 
         // Offline handling
         if (!isOnline.value) {
@@ -234,6 +257,7 @@ export const useItemsStore = defineStore('items', () => {
                 });
             }
 
+            pendingMoves.delete(moveKey);
             return { data: items.value[index] };
         }
 
@@ -264,10 +288,16 @@ export const useItemsStore = defineStore('items', () => {
         } catch (err) {
             // Revert optimistic update on error
             if (originalItem && index !== -1) {
-                items.value.splice(index, 0, originalItem);
+                // Check if item still exists in the array before reinserting
+                const currentIndex = items.value.findIndex(item => item.id === id);
+                if (currentIndex === -1) {
+                    items.value.splice(index, 0, originalItem);
+                }
             }
             error.value = err.message;
             throw err;
+        } finally {
+            pendingMoves.delete(moveKey);
         }
     };
 

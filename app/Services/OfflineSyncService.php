@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Actions\Item\MoveItemAction;
+use App\Enums\ListType;
 use App\Models\Item;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +15,7 @@ final class OfflineSyncService
 {
     public function __construct(
         private ActivityLogger $activityLogger,
+        private MoveItemAction $moveItemAction,
     ) {}
 
     /**
@@ -224,21 +227,19 @@ final class OfflineSyncService
         }
 
         $fromList = $item->list_type;
-        $toList = $data['to_list'];
+        $toList = ListType::from($data['to_list']);
 
-        $item->moveTo($toList);
-
-        // Log appropriate activity
-        if ($toList === Item::LIST_TYPE_INVENTORY) {
-            $this->activityLogger->itemChecked($item, $user);
-        }
+        // Use MoveItemAction for proper deduplication handling
+        $result = $this->moveItemAction->execute($item, $toList, $user);
 
         return [
             'status' => 'success',
             'action' => 'item:move',
-            'item_id' => $item->id,
+            'item_id' => $result['item']?->id ?? $item->id,
             'from' => $fromList,
-            'to' => $toList,
+            'to' => $data['to_list'],
+            'deduplication' => $result['deduplication'],
+            'message' => $result['message'],
         ];
     }
 }

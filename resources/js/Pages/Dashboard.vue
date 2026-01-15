@@ -217,20 +217,24 @@
                       @click="openEditModal(item)"
                       class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                       title="Bearbeiten"
+                      :disabled="isProcessing(item.id)"
                     >
                       ✏️
                     </button>
                     <button
                       @click="checkItem(item)"
-                      class="text-green-500 hover:text-green-600"
+                      class="text-green-500 hover:text-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Abhaken"
+                      :disabled="isProcessing(item.id)"
                     >
-                      ✓
+                      <span v-if="isProcessing(item.id)" class="animate-spin">⏳</span>
+                      <span v-else>✓</span>
                     </button>
                     <button
                       @click="deleteItem(item)"
-                      class="text-red-500 hover:text-red-600"
+                      class="text-red-500 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Löschen"
+                      :disabled="isProcessing(item.id)"
                     >
                       🗑️
                     </button>
@@ -419,6 +423,10 @@ const editForm = ref({
   category_id: null,
 });
 const showQuickBuy = ref(false);
+
+// Track items being processed to prevent double-clicks
+const processingItemIds = ref(new Set());
+const isProcessing = (itemId) => processingItemIds.value.has(itemId);
 
 const quickBuyItems = computed(() => itemsStore.quickBuyItems);
 const toBuyItems = computed(() => itemsStore.toBuyItems);
@@ -629,6 +637,12 @@ const moveToList = async (item) => {
 };
 
 const checkItem = async (item) => {
+  // Prevent double-clicks
+  if (isProcessing(item.id)) {
+    return;
+  }
+
+  processingItemIds.value.add(item.id);
   try {
     const result = await itemsStore.moveItem(item.id, 'inventory');
     if (result.deduplication) {
@@ -638,17 +652,27 @@ const checkItem = async (item) => {
     }
   } catch (err) {
     error('Fehler beim Abhaken');
+  } finally {
+    processingItemIds.value.delete(item.id);
   }
 };
 
 const deleteItem = async (item) => {
   if (!confirm(`"${item.name}" wirklich löschen?`)) return;
 
+  // Prevent double-clicks
+  if (isProcessing(item.id)) {
+    return;
+  }
+
+  processingItemIds.value.add(item.id);
   try {
     await itemsStore.deleteItem(item.id);
     success(`"${item.name}" gelöscht`);
   } catch (err) {
     error('Fehler beim Löschen');
+  } finally {
+    processingItemIds.value.delete(item.id);
   }
 };
 
