@@ -11,15 +11,14 @@ services:
     restart: unless-stopped
     working_dir: /var/www
 
-    # Volumes: Code + Persistent Storage
+    # Volumes: Persistent Storage Only
+    # The image already contains the application code with vendor/ and public/build/
     volumes:
-      # Application code (read-only in production for security)
-      - ./:/var/www:ro
       # Laravel storage MUST be writable (logs, cache, sessions, uploads)
       - storage-data:/var/www/storage
       - bootstrap-cache:/var/www/bootstrap/cache
-      # PHP config
-      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
+      # Public folder shared with nginx for static file serving
+      - public-data:/var/www/public
 
     networks:
       - chnubber-network
@@ -66,10 +65,8 @@ services:
       - "${APP_PORT:-8585}:80"
 
     volumes:
-      # Application public files (read-only)
-      - ./public:/var/www/public:ro
-      # Built assets
-      - ./public/build:/var/www/public/build:ro
+      # Shared public folder with built assets from app container (read-only)
+      - public-data:/var/www/public:ro
       # Nginx config
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
@@ -203,7 +200,6 @@ services:
     working_dir: /var/www
 
     volumes:
-      - ./:/var/www:ro
       - storage-data:/var/www/storage
 
     networks:
@@ -244,7 +240,6 @@ services:
     working_dir: /var/www
 
     volumes:
-      - ./:/var/www:ro
       - storage-data:/var/www/storage
 
     networks:
