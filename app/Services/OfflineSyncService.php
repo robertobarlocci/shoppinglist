@@ -235,7 +235,7 @@ final class OfflineSyncService
         return [
             'status' => 'success',
             'action' => 'item:move',
-            'item_id' => $result['item']?->id ?? $item->id,
+            'item_id' => $result['item'] !== null ? $result['item']->id : $item->id,
             'from' => $fromList,
             'to' => $data['to_list'],
             'deduplication' => $result['deduplication'],
