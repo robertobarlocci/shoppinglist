@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\LunchboxItemUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LunchboxItemResource;
 use App\Models\LunchboxItem;
@@ -77,6 +78,17 @@ final class LunchboxController extends Controller
 
             DB::commit();
 
+            // Broadcast to parent if kid has a parent
+            /** @var \App\Models\User $user */
+            $user = auth()->user();
+            if ($user->parent_id) {
+                LunchboxItemUpdated::dispatch(
+                    'created',
+                    $lunchboxItem,
+                    $user->parent_id,
+                );
+            }
+
             return new LunchboxItemResource($lunchboxItem->load('user'));
         } catch (\Exception $e) {
             DB::rollBack();
@@ -96,8 +108,22 @@ final class LunchboxController extends Controller
         DB::beginTransaction();
 
         try {
+            $deletedItemId = $lunchboxItem->id;
+            /** @var int|null $parentId */
+            $parentId = $lunchboxItem->user->parent_id;
+
             $lunchboxItem->delete();
             DB::commit();
+
+            // Broadcast to parent if kid has a parent
+            if ($parentId) {
+                LunchboxItemUpdated::dispatch(
+                    'deleted',
+                    null,
+                    $parentId,
+                    $deletedItemId,
+                );
+            }
 
             return response()->json([
                 'message' => 'Lunchbox item deleted successfully',

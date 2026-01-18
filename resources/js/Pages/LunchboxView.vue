@@ -122,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { useLunchboxStore } from '../Stores/lunchbox';
 import { useTheme } from '../Composables/useTheme';
@@ -222,6 +222,17 @@ async function loadLunchboxItems() {
 // Initialize
 onMounted(() => {
   loadLunchboxItems();
+
+  // Subscribe to real-time updates if user is a parent
+  if (isParent.value && currentUser.value?.id) {
+    lunchboxStore.subscribeToUpdates(currentUser.value.id);
+  }
+});
+
+// Cleanup
+onUnmounted(() => {
+  // Unsubscribe from real-time updates
+  lunchboxStore.unsubscribeFromUpdates();
 });
 
 // Watch for week changes

@@ -7,6 +7,7 @@ export const useLunchboxStore = defineStore('lunchbox', () => {
     const loading = ref(false);
     const error = ref(null);
     const currentWeekStart = ref(null);
+    let channel = null;
 
     // Get lunchbox items grouped by date and user
     const groupedByDate = computed(() => {
@@ -116,6 +117,48 @@ export const useLunchboxStore = defineStore('lunchbox', () => {
         }
     };
 
+    // Subscribe to real-time updates for a parent
+    const subscribeToUpdates = (parentId) => {
+        if (!window.Echo || !parentId) {
+            return;
+        }
+
+        // Unsubscribe from previous channel if any
+        unsubscribeFromUpdates();
+
+        // Subscribe to the parent's lunchbox channel
+        channel = window.Echo.private(`lunchbox.${parentId}`);
+
+        channel.listen('.lunchbox.updated', (event) => {
+            console.log('Lunchbox update received:', event);
+
+            if (event.action === 'created' && event.item) {
+                // Check if item already exists (avoid duplicates)
+                const exists = lunchboxItems.value.some(item => item.id === event.item.id);
+                if (!exists) {
+                    lunchboxItems.value.push(event.item);
+                }
+            } else if (event.action === 'deleted' && event.deleted_item_id) {
+                // Remove the deleted item from local state
+                const index = lunchboxItems.value.findIndex(
+                    item => item.id === event.deleted_item_id
+                );
+                if (index !== -1) {
+                    lunchboxItems.value.splice(index, 1);
+                }
+            }
+        });
+    };
+
+    // Unsubscribe from real-time updates
+    const unsubscribeFromUpdates = () => {
+        if (channel) {
+            channel.stopListening('.lunchbox.updated');
+            window.Echo.leave(channel.name);
+            channel = null;
+        }
+    };
+
     return {
         lunchboxItems,
         loading,
@@ -129,5 +172,7 @@ export const useLunchboxStore = defineStore('lunchbox', () => {
         createLunchboxItem,
         deleteLunchboxItem,
         getAutocompleteSuggestions,
+        subscribeToUpdates,
+        unsubscribeFromUpdates,
     };
 });
