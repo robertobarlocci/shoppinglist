@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -37,18 +39,16 @@ final class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $user = $request->user();
-
         return array_merge(parent::share($request), [
             'auth' => [
-                'user' => $user ? [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'avatar_color' => $user->avatar_color,
-                    'role' => $user->role,
-                    'children' => $user->isParent()
-                        ? $user->children->map(fn ($child) => [
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'avatar_color' => $request->user()->avatar_color,
+                    'role' => $request->user()->role,
+                    'children' => $request->user()->isParent()
+                        ? User::where('role', UserRole::KID)->get()->map(fn ($child) => [
                             'id' => $child->id,
                             'name' => $child->name,
                             'avatar_color' => $child->avatar_color,

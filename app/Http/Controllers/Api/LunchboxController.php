@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\UserRole;
 use App\Events\LunchboxItemUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LunchboxItemResource;
 use App\Models\LunchboxItem;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,9 +43,9 @@ final class LunchboxController extends Controller
             // Kids see only their own lunchbox items
             $query->where('user_id', $user->id);
         } elseif ($user->isParent()) {
-            // Parents see all their children's lunchbox items
-            $childIds = $user->children()->pluck('id')->toArray();
-            $query->whereIn('user_id', $childIds);
+            // Parents see all kids' lunchbox items (single household assumption)
+            $kidIds = User::where('role', UserRole::KID)->pluck('id')->toArray();
+            $query->whereIn('user_id', $kidIds);
         }
 
         $lunchboxItems = $query
@@ -168,12 +170,12 @@ final class LunchboxController extends Controller
                 $itemQuery->where('user_id', $user->id);
             }
         } elseif ($user->isParent()) {
-            // For parents, get suggestions from all their children
-            $childIds = $user->children()->pluck('id')->toArray();
-            if (! empty($childIds)) {
-                $itemQuery->whereIn('user_id', $childIds);
+            // For parents, get suggestions from all kids (single household)
+            $kidIds = User::where('role', UserRole::KID)->pluck('id')->toArray();
+            if (! empty($kidIds)) {
+                $itemQuery->whereIn('user_id', $kidIds);
             } else {
-                // If parent has no children, return empty
+                // If no kids exist, return empty
                 return response()->json([]);
             }
         }

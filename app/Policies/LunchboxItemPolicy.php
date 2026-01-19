@@ -27,11 +27,11 @@ final class LunchboxItemPolicy
             return true;
         }
 
-        // Parents can view their children's items
+        // Parents can view any kid's items (single household assumption)
         if ($user->isParent()) {
-            $childIds = $user->children()->pluck('id')->toArray();
+            $itemOwner = User::find($lunchboxItem->user_id);
 
-            return in_array($lunchboxItem->user_id, $childIds);
+            return $itemOwner && $itemOwner->isKid();
         }
 
         return false;

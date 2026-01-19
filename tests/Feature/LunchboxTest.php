@@ -120,8 +120,9 @@ final class LunchboxTest extends TestCase
         ]);
     }
 
-    public function test_parents_cannot_view_other_parents_children_lunchbox_items(): void
+    public function test_parents_can_see_all_kids_lunchbox_items_single_household(): void
     {
+        // In a single-household app, any parent can see any kid's items
         $parent1 = User::factory()->create(['role' => 'parent']);
         $parent2 = User::factory()->create(['role' => 'parent']);
         $kid1 = User::factory()->create(['role' => 'kid', 'parent_id' => $parent1->id]);
@@ -132,10 +133,11 @@ final class LunchboxTest extends TestCase
             'item_name' => 'Secret Snack',
         ]);
 
+        // Parent2 should also see kid1's items (single household assumption)
         $response = $this->actingAs($parent2)->getJson('/api/lunchbox?start_date=2026-01-06');
 
         $response->assertStatus(200);
-        $response->assertJsonMissing([
+        $response->assertJsonFragment([
             'item_name' => 'Secret Snack',
         ]);
     }
