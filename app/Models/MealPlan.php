@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Storage;
  * @property \Carbon\Carbon $date
  * @property MealType $meal_type
  * @property string $title
+ * @property string|null $image_path
+ * @property-read string|null $image_url
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property-read User $user
