@@ -166,6 +166,45 @@ export const useMealPlansStore = defineStore('mealPlans', () => {
         }
     };
 
+    // Upload image for a meal plan
+    const uploadMealImage = async (mealPlanId, file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const response = await axios.post(
+                `/api/meal-plans/${mealPlanId}/image`,
+                formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+
+            // Refresh meal plans to sync image across all same-title meals
+            if (currentWeekStart.value) {
+                await fetchMealPlans(currentWeekStart.value);
+            }
+
+            return response.data;
+        } catch (err) {
+            error.value = err.message;
+            throw err;
+        }
+    };
+
+    // Delete image from a meal plan
+    const deleteMealImage = async (mealPlanId) => {
+        try {
+            await axios.delete(`/api/meal-plans/${mealPlanId}/image`);
+
+            // Refresh meal plans to sync removal across all same-title meals
+            if (currentWeekStart.value) {
+                await fetchMealPlans(currentWeekStart.value);
+            }
+        } catch (err) {
+            error.value = err.message;
+            throw err;
+        }
+    };
+
     // Search for meal titles (autocomplete)
     const searchMeals = async (query) => {
         if (query.length < 2) {
@@ -209,6 +248,8 @@ export const useMealPlansStore = defineStore('mealPlans', () => {
         addIngredient,
         removeIngredient,
         addIngredientsToShoppingList,
+        uploadMealImage,
+        deleteMealImage,
         searchMeals,
         fetchMealsLibrary,
     };

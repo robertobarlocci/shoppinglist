@@ -22,6 +22,7 @@ final class MealPlanResource extends JsonResource
             'date' => $this->date->format('Y-m-d'),
             'meal_type' => $this->meal_type,
             'title' => $this->title,
+            'image_url' => $this->image_url,
             'ingredients' => MealPlanIngredientResource::collection($this->whenLoaded('ingredients')),
             'ingredients_count' => $this->whenLoaded('ingredients', function () {
                 return $this->ingredients->count();

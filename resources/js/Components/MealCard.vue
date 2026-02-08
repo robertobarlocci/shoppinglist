@@ -17,9 +17,15 @@
       @click="$emit('clickMeal', meal)"
       class="min-h-[80px] p-3 bg-gray-50 dark:bg-[var(--bg-primary)] rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
     >
-      <div class="flex items-start justify-between">
-        <div class="flex-1">
-          <h4 class="font-medium text-gray-900 dark:text-white mb-1">
+      <div class="flex items-start gap-2">
+        <img
+          v-if="meal.image_url"
+          :src="meal.image_url"
+          :alt="meal.title"
+          class="w-10 h-10 object-cover rounded flex-shrink-0"
+        />
+        <div class="flex-1 min-w-0">
+          <h4 class="font-medium text-gray-900 dark:text-white mb-1 truncate">
             {{ meal.title }}
           </h4>
           <p v-if="meal.ingredients && meal.ingredients.length > 0" class="text-xs text-gray-500 dark:text-gray-400">
@@ -28,7 +34,7 @@
         </div>
         <button
           @click.stop="$emit('clickMeal', meal)"
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
         >
           →
         </button>

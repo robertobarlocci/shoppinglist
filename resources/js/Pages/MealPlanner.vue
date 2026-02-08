@@ -274,6 +274,41 @@
           </button>
         </div>
 
+        <!-- Meal Image -->
+        <div class="mb-6">
+          <div v-if="selectedMeal?.image_url" class="relative mb-3">
+            <img
+              :src="selectedMeal.image_url"
+              :alt="selectedMeal.title"
+              class="w-full h-48 object-cover rounded-lg"
+            />
+            <button
+              v-if="isParent"
+              @click="deleteImage"
+              class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm shadow-lg"
+              title="Bild entfernen"
+            >
+              ✕
+            </button>
+          </div>
+          <div v-if="isParent" class="flex gap-2">
+            <button
+              @click="triggerImageUpload"
+              :disabled="imageUploading"
+              class="text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-lg disabled:opacity-50"
+            >
+              {{ imageUploading ? 'Lädt...' : (selectedMeal?.image_url ? 'Bild ändern' : 'Bild hinzufügen') }}
+            </button>
+            <input
+              ref="imageFileInput"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              class="hidden"
+              @change="handleImageUpload"
+            />
+          </div>
+        </div>
+
         <!-- Ingredients -->
         <div class="mb-6">
           <div class="flex items-center justify-between mb-3">
@@ -389,7 +424,19 @@
             :key="index"
             class="p-3 bg-gray-50 dark:bg-[var(--bg-primary)] rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
-            <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <img
+                v-if="meal.image_url"
+                :src="meal.image_url"
+                :alt="meal.title"
+                class="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+              />
+              <div
+                v-else
+                class="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0"
+              >
+                <span class="text-gray-400 dark:text-gray-500 text-lg">🍽️</span>
+              </div>
               <div class="flex-1">
                 <h3 class="font-medium text-gray-900 dark:text-white">
                   {{ meal.title }}
@@ -492,6 +539,10 @@ const selectedMeal = ref(null);
 // Meals library modal
 const showMealsLibraryModal = ref(false);
 const mealsLibrary = ref([]);
+
+// Image upload
+const imageUploading = ref(false);
+const imageFileInput = ref(null);
 
 // Ingredient form
 const newIngredientName = ref('');
@@ -669,6 +720,40 @@ async function deleteMeal() {
     closeMealDetailsModal();
   } catch (err) {
     showError('Fehler beim Löschen der Mahlzeit');
+  }
+}
+
+// Image upload
+function triggerImageUpload() {
+  imageFileInput.value?.click();
+}
+
+async function handleImageUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  imageUploading.value = true;
+  try {
+    await mealPlansStore.uploadMealImage(selectedMeal.value.id, file);
+    // Refresh selected meal from store
+    selectedMeal.value = mealPlansStore.mealPlans.find(m => m.id === selectedMeal.value.id);
+    success('Bild hochgeladen');
+  } catch (err) {
+    showError('Fehler beim Hochladen des Bildes');
+  } finally {
+    imageUploading.value = false;
+    // Reset file input
+    if (imageFileInput.value) imageFileInput.value.value = '';
+  }
+}
+
+async function deleteImage() {
+  try {
+    await mealPlansStore.deleteMealImage(selectedMeal.value.id);
+    selectedMeal.value = mealPlansStore.mealPlans.find(m => m.id === selectedMeal.value.id);
+    success('Bild entfernt');
+  } catch (err) {
+    showError('Fehler beim Entfernen des Bildes');
   }
 }
 
