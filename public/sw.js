@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chnubber-shop-v9';
+const CACHE_NAME = 'chnubber-shop-v10';
 
 // Static assets that are safe to cache
 // Note: We explicitly DO NOT cache '/' or any HTML pages to avoid CSRF token issues
