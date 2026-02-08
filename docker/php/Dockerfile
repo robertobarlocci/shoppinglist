@@ -91,7 +91,9 @@ RUN php artisan config:clear \
     && php artisan view:clear
 
 # Save a copy of public dir so the entrypoint can sync fresh assets into the Docker volume
-RUN cp -r /var/www/public /var/www/public-build
+# Ensure both copies are owned by www so the entrypoint can overwrite the volume contents
+RUN cp -r /var/www/public /var/www/public-build \
+    && chown -R www:www /var/www/public /var/www/public-build
 
 # Copy entrypoint script (needs to be root-owned for exec)
 COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
