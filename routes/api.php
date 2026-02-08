@@ -52,6 +52,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/meal-plans/{mealPlan}', [MealPlanController::class, 'update']);
     Route::delete('/meal-plans/{mealPlan}', [MealPlanController::class, 'destroy']);
 
+    // Meal Plan Images
+    Route::post('/meal-plans/{mealPlan}/image', [MealPlanController::class, 'uploadImage']);
+    Route::delete('/meal-plans/{mealPlan}/image', [MealPlanController::class, 'deleteImage']);
+
     // Meal Plan Ingredients
     Route::post('/meal-plans/{mealPlan}/ingredients', [MealPlanController::class, 'addIngredient']);
     Route::delete('/meal-plans/{mealPlan}/ingredients/{ingredient}', [MealPlanController::class, 'removeIngredient']);

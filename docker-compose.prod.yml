@@ -67,6 +67,8 @@ services:
     volumes:
       # Shared public folder with built assets from app container (read-only)
       - public-data:/var/www/public:ro
+      # Storage volume so nginx can follow public/storage symlink for uploaded images
+      - storage-data:/var/www/storage:ro
       # Nginx config
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 

@@ -7,6 +7,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin \App\Models\MealPlan */
 final class MealPlanResource extends JsonResource
 {
     /**
@@ -22,6 +23,7 @@ final class MealPlanResource extends JsonResource
             'date' => $this->date->format('Y-m-d'),
             'meal_type' => $this->meal_type,
             'title' => $this->title,
+            'image_url' => $this->image_url,
             'ingredients' => MealPlanIngredientResource::collection($this->whenLoaded('ingredients')),
             'ingredients_count' => $this->whenLoaded('ingredients', function () {
                 return $this->ingredients->count();

@@ -19,6 +19,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 final class MealPlanController extends Controller
 {
@@ -69,6 +71,12 @@ final class MealPlanController extends Controller
         $mealPlan = DB::transaction(function () use ($request): MealPlan {
             $validated = $request->validated();
 
+            // Look up the latest image_path for this meal title
+            $existingImagePath = MealPlan::where('title', $validated['title'])
+                ->whereNotNull('image_path')
+                ->latest()
+                ->value('image_path');
+
             $mealPlan = MealPlan::updateOrCreate(
                 [
                     'date' => $validated['date'],
@@ -77,6 +85,7 @@ final class MealPlanController extends Controller
                 [
                     'user_id' => $request->user()->id,
                     'title' => $validated['title'],
+                    'image_path' => $existingImagePath,
                 ],
             );
 
@@ -163,6 +172,51 @@ final class MealPlanController extends Controller
     }
 
     /**
+     * Upload an image for a meal plan (propagates to all meals with the same title).
+     */
+    public function uploadImage(Request $request, MealPlan $mealPlan): JsonResponse
+    {
+        $this->authorize('update', $mealPlan);
+
+        $request->validate([
+            'image' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:2048'],
+        ]);
+
+        // Delete old image if replacing
+        if ($mealPlan->image_path) {
+            Storage::disk('public')->delete($mealPlan->image_path);
+        }
+
+        $extension = $request->file('image')->getClientOriginalExtension();
+        $filename = Str::uuid() . '.' . $extension;
+        $path = $request->file('image')->storeAs('meal-images', $filename, 'public');
+
+        // Update all meal plans with the same title
+        MealPlan::where('title', $mealPlan->title)->update(['image_path' => $path]);
+        $mealPlan->refresh();
+
+        return $this->success(
+            data: ['image_url' => $mealPlan->image_url],
+            message: 'Image uploaded',
+        );
+    }
+
+    /**
+     * Delete the image from a meal plan (removes from all meals with the same title).
+     */
+    public function deleteImage(MealPlan $mealPlan): JsonResponse
+    {
+        $this->authorize('update', $mealPlan);
+
+        if ($mealPlan->image_path) {
+            Storage::disk('public')->delete($mealPlan->image_path);
+            MealPlan::where('title', $mealPlan->title)->update(['image_path' => null]);
+        }
+
+        return $this->success(message: 'Image deleted');
+    }
+
+    /**
      * Get meal title suggestions for autocomplete.
      */
     public function suggestMeals(Request $request): JsonResponse
@@ -191,6 +245,7 @@ final class MealPlanController extends Controller
         $meals = MealPlan::select('title')
             ->selectRaw('COUNT(*) as usage_count')
             ->selectRaw('MAX(created_at) as last_used')
+            ->selectRaw('MAX(image_path) as image_path')
             ->groupBy('title')
             ->orderBy('last_used', 'desc')
             ->get()
@@ -198,6 +253,7 @@ final class MealPlanController extends Controller
                 'title' => $meal->title,
                 'usage_count' => $meal->usage_count,
                 'last_used' => $meal->last_used,
+                'image_url' => $meal->image_path ? Storage::disk('public')->url($meal->image_path) : null,
             ]);
 
         return response()->json($meals);

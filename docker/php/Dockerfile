@@ -90,6 +90,10 @@ RUN php artisan config:clear \
     && php artisan route:clear \
     && php artisan view:clear
 
+# Copy entrypoint script (needs to be root-owned for exec)
+COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # ============================================
 
 # Change current user to www
@@ -97,4 +101,5 @@ USER www
 
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
+ENTRYPOINT ["entrypoint.sh"]
 CMD ["php-fpm"]
