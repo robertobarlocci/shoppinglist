@@ -19,6 +19,8 @@ services:
       - bootstrap-cache:/var/www/bootstrap/cache
       # Public folder shared with nginx for static file serving
       - public-data:/var/www/public
+      # PHP configuration for upload limits
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
 
     networks:
       - chnubber-network
