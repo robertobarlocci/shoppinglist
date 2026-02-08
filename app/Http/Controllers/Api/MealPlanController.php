@@ -179,7 +179,7 @@ final class MealPlanController extends Controller
         $this->authorize('update', $mealPlan);
 
         $request->validate([
-            'image' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:2048'],
+            'image' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:10240'],
         ]);
 
         // Delete old image if replacing
