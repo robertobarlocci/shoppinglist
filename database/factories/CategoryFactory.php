@@ -14,7 +14,7 @@ final class CategoryFactory extends Factory
         $name = fake()->word();
 
         return [
-            'slug' => Str::slug($name),
+            'slug' => Str::slug($name) . '-' . Str::random(8),
             'name' => $name,
             'color' => fake()->hexColor(),
             'icon' => 'box',
