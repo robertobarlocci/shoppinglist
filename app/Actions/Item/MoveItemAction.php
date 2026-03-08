@@ -109,7 +109,7 @@ final readonly class MoveItemAction
         $itemName = $item->name;
 
         // Preserve the incoming item's category so the user's latest choice is kept
-        if ($item->category_id !== $existingItem->category_id) {
+        if ($item->category_id !== null && $item->category_id !== $existingItem->category_id) {
             $existingItem->category_id = $item->category_id;
             $existingItem->save();
         }

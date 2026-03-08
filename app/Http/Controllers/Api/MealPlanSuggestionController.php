@@ -156,23 +156,28 @@ final class MealPlanSuggestionController extends Controller
         DB::beginTransaction();
 
         try {
-            // Look up the latest image_path for this meal title
-            $existingImagePath = MealPlan::where('title', $suggestion->title)
+            // Look up the latest image_path for this meal title (case-insensitive)
+            $existingImagePath = MealPlan::whereRaw('LOWER(title) = ?', [strtolower($suggestion->title)])
                 ->whereNotNull('image_path')
                 ->latest()
                 ->value('image_path');
 
             // Create or update the meal plan (shared - one per date/meal_type)
+            $updatePayload = [
+                'user_id' => $user->id,
+                'title' => $suggestion->title,
+            ];
+
+            if ($existingImagePath !== null) {
+                $updatePayload['image_path'] = $existingImagePath;
+            }
+
             $mealPlan = MealPlan::updateOrCreate(
                 [
                     'date' => $suggestion->date,
                     'meal_type' => $suggestion->meal_type,
                 ],
-                [
-                    'user_id' => $user->id,
-                    'title' => $suggestion->title,
-                    'image_path' => $existingImagePath,
-                ],
+                $updatePayload,
             );
 
             // Update suggestion status

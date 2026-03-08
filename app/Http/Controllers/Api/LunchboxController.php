@@ -169,7 +169,7 @@ final class LunchboxController extends Controller
                 // Get all kids under the same parent
                 $siblingIds = DB::table('users')
                     ->where('parent_id', $parentId)
-                    ->where('role', 'kid')
+                    ->where('role', UserRole::KID->value)
                     ->pluck('id')
                     ->toArray();
                 $itemQuery->whereIn('user_id', $siblingIds);

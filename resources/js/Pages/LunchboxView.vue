@@ -82,15 +82,25 @@
           <div class="space-y-4">
             <!-- For kids: Show own and siblings' lunchboxes -->
             <div v-if="isKid" class="space-y-4">
+              <template v-if="siblings.length > 0">
+                <LunchboxCard
+                  v-for="sibling in siblings"
+                  :key="sibling.id"
+                  :date="day.date"
+                  :userId="sibling.id"
+                  :userName="siblings.length > 1 ? sibling.name : ''"
+                  :items="getItemsForDateAndUser(day.date, sibling.id)"
+                  :canEdit="sibling.id === currentUser.id"
+                  :showUserName="siblings.length > 1"
+                />
+              </template>
               <LunchboxCard
-                v-for="sibling in siblings"
-                :key="sibling.id"
+                v-else
                 :date="day.date"
-                :userId="sibling.id"
-                :userName="siblings.length > 1 ? sibling.name : ''"
-                :items="getItemsForDateAndUser(day.date, sibling.id)"
-                :canEdit="sibling.id === currentUser.id"
-                :showUserName="siblings.length > 1"
+                :userId="currentUser.id"
+                :items="getItemsForDateAndUser(day.date, currentUser.id)"
+                :canEdit="true"
+                :showUserName="false"
               />
             </div>
 

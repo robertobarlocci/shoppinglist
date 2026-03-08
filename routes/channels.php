@@ -15,5 +15,5 @@ Broadcast::channel('lunchbox.{parentId}', function ($user, $parentId) {
     }
 
     // Kids can subscribe to their parent's lunchbox channel
-    return $user->isKid() && (int) $user->parent_id === (int) $parentId;
+    return $user->isKid() && $user->parent_id !== null && (int) $user->parent_id === (int) $parentId;
 });
