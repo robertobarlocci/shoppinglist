@@ -142,11 +142,15 @@ final class LunchboxTest extends TestCase
         ]);
     }
 
-    public function test_kids_can_only_view_their_own_lunchbox_items(): void
+    public function test_kids_can_view_siblings_lunchbox_items(): void
     {
         $parent = User::factory()->create(['role' => 'parent']);
         $kid1 = User::factory()->create(['role' => 'kid', 'parent_id' => $parent->id]);
         $kid2 = User::factory()->create(['role' => 'kid', 'parent_id' => $parent->id]);
+
+        // Kid from a different family
+        $otherParent = User::factory()->create(['role' => 'parent']);
+        $otherKid = User::factory()->create(['role' => 'kid', 'parent_id' => $otherParent->id]);
 
         LunchboxItem::create([
             'user_id' => $kid1->id,
@@ -160,14 +164,26 @@ final class LunchboxTest extends TestCase
             'item_name' => 'Kid2 Banana',
         ]);
 
+        LunchboxItem::create([
+            'user_id' => $otherKid->id,
+            'date' => '2026-01-10',
+            'item_name' => 'OtherKid Mango',
+        ]);
+
         $response = $this->actingAs($kid1)->getJson('/api/lunchbox?start_date=2026-01-06');
 
         $response->assertStatus(200);
+        // Kid1 sees their own items
         $response->assertJsonFragment([
             'item_name' => 'Kid1 Apple',
         ]);
-        $response->assertJsonMissing([
+        // Kid1 sees sibling's items
+        $response->assertJsonFragment([
             'item_name' => 'Kid2 Banana',
+        ]);
+        // Kid1 does NOT see items from other families
+        $response->assertJsonMissing([
+            'item_name' => 'OtherKid Mango',
         ]);
     }
 
