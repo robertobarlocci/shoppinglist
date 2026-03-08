@@ -156,6 +156,12 @@ final class MealPlanSuggestionController extends Controller
         DB::beginTransaction();
 
         try {
+            // Look up the latest image_path for this meal title
+            $existingImagePath = MealPlan::where('title', $suggestion->title)
+                ->whereNotNull('image_path')
+                ->latest()
+                ->value('image_path');
+
             // Create or update the meal plan (shared - one per date/meal_type)
             $mealPlan = MealPlan::updateOrCreate(
                 [
@@ -165,6 +171,7 @@ final class MealPlanSuggestionController extends Controller
                 [
                     'user_id' => $user->id,
                     'title' => $suggestion->title,
+                    'image_path' => $existingImagePath,
                 ],
             );
 
