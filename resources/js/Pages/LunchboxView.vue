@@ -80,14 +80,17 @@
 
           <!-- Lunchbox cards -->
           <div class="space-y-4">
-            <!-- For kids: Show their own lunchbox -->
-            <div v-if="isKid">
+            <!-- For kids: Show own and siblings' lunchboxes -->
+            <div v-if="isKid" class="space-y-4">
               <LunchboxCard
+                v-for="sibling in siblings"
+                :key="sibling.id"
                 :date="day.date"
-                :userId="currentUser.id"
-                :items="getItemsForDateAndUser(day.date, currentUser.id)"
-                :canEdit="true"
-                :showUserName="false"
+                :userId="sibling.id"
+                :userName="siblings.length > 1 ? sibling.name : ''"
+                :items="getItemsForDateAndUser(day.date, sibling.id)"
+                :canEdit="sibling.id === currentUser.id"
+                :showUserName="siblings.length > 1"
               />
             </div>
 
@@ -135,6 +138,7 @@ const { isDark, toggleTheme } = useTheme();
 const page = usePage();
 const currentUser = computed(() => page.props.auth.user);
 const children = computed(() => page.props.auth.user?.children || []);
+const siblings = computed(() => page.props.auth.user?.siblings || []);
 const isKid = computed(() => currentUser.value?.role === 'kid');
 const isParent = computed(() => currentUser.value?.role === 'parent');
 
@@ -223,9 +227,11 @@ async function loadLunchboxItems() {
 onMounted(() => {
   loadLunchboxItems();
 
-  // Subscribe to real-time updates if user is a parent
+  // Subscribe to real-time updates
   if (isParent.value && currentUser.value?.id) {
     lunchboxStore.subscribeToUpdates(currentUser.value.id);
+  } else if (isKid.value && page.props.auth.user?.parent_id) {
+    lunchboxStore.subscribeToUpdates(page.props.auth.user.parent_id);
   }
 });
 

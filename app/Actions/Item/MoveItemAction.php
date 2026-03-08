@@ -107,6 +107,13 @@ final readonly class MoveItemAction
     private function handleDuplicate(Item $item, Item $existingItem, User $user): array
     {
         $itemName = $item->name;
+
+        // Preserve the incoming item's category so the user's latest choice is kept
+        if ($item->category_id !== $existingItem->category_id) {
+            $existingItem->category_id = $item->category_id;
+            $existingItem->save();
+        }
+
         $item->forceDelete();
         $this->activityLogger->itemChecked($existingItem, $user);
 

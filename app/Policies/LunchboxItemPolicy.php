@@ -22,9 +22,22 @@ final class LunchboxItemPolicy
      */
     public function view(User $user, LunchboxItem $lunchboxItem): bool
     {
-        // Kids can view their own items
-        if ($user->isKid() && $lunchboxItem->user_id === $user->id) {
-            return true;
+        // Kids can view their own and siblings' items
+        if ($user->isKid()) {
+            if ($lunchboxItem->user_id === $user->id) {
+                return true;
+            }
+
+            // Allow viewing sibling items (same parent)
+            if ($user->parent_id) {
+                $itemOwner = User::find($lunchboxItem->user_id);
+
+                return $itemOwner
+                    && $itemOwner->isKid()
+                    && $itemOwner->parent_id === $user->parent_id;
+            }
+
+            return false;
         }
 
         // Parents can view any kid's items (single household assumption)

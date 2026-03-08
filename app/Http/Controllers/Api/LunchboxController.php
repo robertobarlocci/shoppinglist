@@ -40,8 +40,16 @@ final class LunchboxController extends Controller
             ->whereBetween('date', [$startDate, $endDate]);
 
         if ($user->isKid()) {
-            // Kids see only their own lunchbox items
-            $query->where('user_id', $user->id);
+            // Kids see their own and siblings' lunchbox items
+            if ($user->parent_id) {
+                $siblingIds = User::where('parent_id', $user->parent_id)
+                    ->where('role', UserRole::KID)
+                    ->pluck('id')
+                    ->toArray();
+                $query->whereIn('user_id', $siblingIds);
+            } else {
+                $query->where('user_id', $user->id);
+            }
         } elseif ($user->isParent()) {
             // Parents see all kids' lunchbox items (single household assumption)
             $kidIds = User::where('role', UserRole::KID)->pluck('id')->toArray();

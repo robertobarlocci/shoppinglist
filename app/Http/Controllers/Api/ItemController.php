@@ -183,7 +183,7 @@ final class ItemController extends Controller
         // Use DISTINCT at database level for better performance
         $items = Item::select('items.*')
             ->whereIn('id', function ($subquery) use ($query) {
-                $subquery->selectRaw('MIN(id)')
+                $subquery->selectRaw('MAX(id)')
                     ->from('items')
                     ->where('name', 'ILIKE', "%{$query}%")
                     ->whereNull('deleted_at')

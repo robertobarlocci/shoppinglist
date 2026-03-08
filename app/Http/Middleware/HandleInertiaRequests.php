@@ -47,12 +47,22 @@ final class HandleInertiaRequests extends Middleware
                     'email' => $request->user()->email,
                     'avatar_color' => $request->user()->avatar_color,
                     'role' => $request->user()->role,
+                    'parent_id' => $request->user()->parent_id,
                     'children' => $request->user()->isParent()
                         ? User::where('role', UserRole::KID)->get()->map(fn ($child) => [
                             'id' => $child->id,
                             'name' => $child->name,
                             'avatar_color' => $child->avatar_color,
                         ])->toArray()
+                        : [],
+                    'siblings' => $request->user()->isKid() && $request->user()->parent_id
+                        ? User::where('parent_id', $request->user()->parent_id)
+                            ->where('role', UserRole::KID)
+                            ->get()->map(fn ($sibling) => [
+                                'id' => $sibling->id,
+                                'name' => $sibling->name,
+                                'avatar_color' => $sibling->avatar_color,
+                            ])->toArray()
                         : [],
                 ] : null,
             ],

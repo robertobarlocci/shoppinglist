@@ -9,6 +9,11 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('lunchbox.{parentId}', function ($user, $parentId) {
-    // Only parents can subscribe to their own lunchbox channel
-    return $user->isParent() && (int) $user->id === (int) $parentId;
+    // Parents can subscribe to their own lunchbox channel
+    if ($user->isParent() && (int) $user->id === (int) $parentId) {
+        return true;
+    }
+
+    // Kids can subscribe to their parent's lunchbox channel
+    return $user->isKid() && (int) $user->parent_id === (int) $parentId;
 });
