@@ -168,9 +168,7 @@
               <div class="flex-1">
                 <div class="flex items-center gap-2">
                   <span class="dark:text-white">⚡ {{ item.name }}</span>
-                  <span v-if="item.list_type === 'inventory'" class="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded">Vorrat</span>
-                  <span v-else-if="item.list_type === 'to_buy'" class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">Einkaufsliste</span>
-                  <span v-else-if="item.list_type === 'quick_buy'" class="text-xs px-2 py-1 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 rounded">Quick Buy</span>
+                  <span v-if="item.category" class="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded">{{ item.category.name }}</span>
                 </div>
                 <span v-if="item.quantity" class="text-sm text-gray-500 ml-2">{{ item.quantity }}</span>
               </div>
