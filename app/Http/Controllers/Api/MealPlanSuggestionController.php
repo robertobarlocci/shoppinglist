@@ -84,7 +84,7 @@ final class MealPlanSuggestionController extends Controller
                 'user_id' => $user->id,
                 'date' => $validated['date'],
                 'meal_type' => $validated['meal_type'],
-                'title' => $validated['title'],
+                'title' => trim($validated['title']),
                 'status' => MealPlanSuggestion::STATUS_PENDING,
             ]);
 
@@ -153,31 +153,28 @@ final class MealPlanSuggestionController extends Controller
             return response()->json(['message' => 'Suggestion is not pending'], 400);
         }
 
+        $title = trim($suggestion->title);
+
         DB::beginTransaction();
 
         try {
             // Look up the latest image_path for this meal title (case-insensitive)
-            $existingImagePath = MealPlan::whereRaw('LOWER(title) = ?', [strtolower($suggestion->title)])
+            $existingImagePath = MealPlan::whereRaw('LOWER(title) = ?', [strtolower($title)])
                 ->whereNotNull('image_path')
                 ->latest()
                 ->value('image_path');
 
             // Create or update the meal plan (shared - one per date/meal_type)
-            $updatePayload = [
-                'user_id' => $user->id,
-                'title' => $suggestion->title,
-            ];
-
-            if ($existingImagePath !== null) {
-                $updatePayload['image_path'] = $existingImagePath;
-            }
-
             $mealPlan = MealPlan::updateOrCreate(
                 [
                     'date' => $suggestion->date,
                     'meal_type' => $suggestion->meal_type,
                 ],
-                $updatePayload,
+                [
+                    'user_id' => $user->id,
+                    'title' => $title,
+                    'image_path' => $existingImagePath,
+                ],
             );
 
             // Update suggestion status

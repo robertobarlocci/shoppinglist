@@ -70,9 +70,10 @@ final class MealPlanController extends Controller
     {
         $mealPlan = DB::transaction(function () use ($request): MealPlan {
             $validated = $request->validated();
+            $title = trim($validated['title']);
 
-            // Look up the latest image_path for this meal title
-            $existingImagePath = MealPlan::where('title', $validated['title'])
+            // Look up the latest image_path for this meal title (case-insensitive)
+            $existingImagePath = MealPlan::whereRaw('LOWER(title) = ?', [strtolower($title)])
                 ->whereNotNull('image_path')
                 ->latest()
                 ->value('image_path');
@@ -84,7 +85,7 @@ final class MealPlanController extends Controller
                 ],
                 [
                     'user_id' => $request->user()->id,
-                    'title' => $validated['title'],
+                    'title' => $title,
                     'image_path' => $existingImagePath,
                 ],
             );
@@ -110,7 +111,21 @@ final class MealPlanController extends Controller
      */
     public function update(UpdateMealPlanRequest $request, MealPlan $mealPlan): MealPlanResource
     {
-        $mealPlan->update($request->validated());
+        $validated = $request->validated();
+
+        if (isset($validated['title'])) {
+            $validated['title'] = trim($validated['title']);
+
+            // If title changed, look up image for the new title
+            if (strtolower($validated['title']) !== strtolower($mealPlan->title)) {
+                $validated['image_path'] = MealPlan::whereRaw('LOWER(title) = ?', [strtolower($validated['title'])])
+                    ->whereNotNull('image_path')
+                    ->latest()
+                    ->value('image_path');
+            }
+        }
+
+        $mealPlan->update($validated);
 
         return new MealPlanResource($mealPlan->load('ingredients'));
     }
@@ -191,8 +206,9 @@ final class MealPlanController extends Controller
         $filename = Str::uuid() . '.' . $extension;
         $path = $request->file('image')->storeAs('meal-images', $filename, 'public');
 
-        // Update all meal plans with the same title
-        MealPlan::where('title', $mealPlan->title)->update(['image_path' => $path]);
+        // Update all meal plans with the same title (case-insensitive)
+        MealPlan::whereRaw('LOWER(title) = ?', [strtolower($mealPlan->title)])
+            ->update(['image_path' => $path]);
         $mealPlan->refresh();
 
         return $this->success(
@@ -210,7 +226,10 @@ final class MealPlanController extends Controller
 
         if ($mealPlan->image_path) {
             Storage::disk('public')->delete($mealPlan->image_path);
-            MealPlan::where('title', $mealPlan->title)->update(['image_path' => null]);
+
+            // Nullify for all meals with the same title (case-insensitive)
+            MealPlan::whereRaw('LOWER(title) = ?', [strtolower($mealPlan->title)])
+                ->update(['image_path' => null]);
         }
 
         return $this->success(message: 'Image deleted');
