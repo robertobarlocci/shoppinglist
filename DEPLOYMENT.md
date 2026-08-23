@@ -11,7 +11,7 @@ CI  ──►  Build & Push Image  ──►  Deploy to Production
 │         │                        ├─ back up the database (verified)
 │         │                        ├─ pull the exact image digest
 │         │                        ├─ restart the stack
-│         │                        ├─ health-check https://chnubber.grobiane.ch/up
+│         │                        ├─ health-check http://localhost/up (from chnubber-nginx)
 │         │                        └─ delete the backup  (or roll back + keep it)
 │         └─ only runs when every CI job is green
 └─ code style, static analysis, PHPUnit (PostgreSQL + Redis), frontend build
@@ -81,7 +81,9 @@ docker compose -f docker-compose.prod.yml up -d
 A failed deploy leaves its verified dump in `/root/shoppinglist/backups/`:
 
 ```bash
-docker exec -i chnubber-db pg_restore -U shoppinglist -d shoppinglist --clean --if-exists \
+# DB_USERNAME / DB_DATABASE as set in /root/shoppinglist/.env
+source <(grep -E '^DB_(USERNAME|DATABASE)=' /root/shoppinglist/.env)
+docker exec -i chnubber-db pg_restore -U "$DB_USERNAME" -d "$DB_DATABASE" --clean --if-exists \
   < /root/shoppinglist/backups/pre-deploy_<timestamp>.dump
 ```
 
@@ -232,7 +234,7 @@ DATE=$(date +%Y%m%d_%H%M%S)
 mkdir -p $BACKUP_DIR
 
 # Backup PostgreSQL
-docker exec chnubber-db pg_dump -U chnubber chnubber | gzip > "$BACKUP_DIR/db_$DATE.sql.gz"
+docker exec chnubber-db pg_dump -U "$DB_USERNAME" "$DB_DATABASE" | gzip > "$BACKUP_DIR/db_$DATE.sql.gz"
 
 # Backup .env file
 cp /root/shoppinglist/.env "$BACKUP_DIR/env_$DATE.backup"
@@ -258,8 +260,9 @@ crontab -e
 
 ```bash
 # Restore database
+source <(grep -E '^DB_(USERNAME|DATABASE)=' /root/shoppinglist/.env)
 gunzip -c /root/shoppinglist/backups/db_20260103_020000.sql.gz | \
-  docker exec -i chnubber-db psql -U chnubber chnubber
+  docker exec -i chnubber-db psql -U "$DB_USERNAME" "$DB_DATABASE"
 ```
 
 ## 🔍 Verify Data Persistence
@@ -301,8 +304,8 @@ docker system df -v
 
 ### Check database size:
 ```bash
-docker exec chnubber-db psql -U chnubber -c "
-  SELECT pg_size_pretty(pg_database_size('chnubber')) as db_size;
+docker exec chnubber-db psql -U shoppinglist -c "
+  SELECT pg_size_pretty(pg_database_size('shoppinglist')) as db_size;
 "
 ```
 

@@ -41,7 +41,11 @@ BACKUP_PREFIX="pre-deploy"
 # --------------------------------------------------------------------- helpers
 log()  { printf '\033[0;36m[deploy]\033[0m %s\n' "$*"; }
 # Machine-readable outcome marker consumed by the GitHub Actions summary step.
-state() { printf 'DEPLOY_STATE: %s\n' "$1"; }
+STATE_EMITTED=""
+PREVIOUS_ID=""   # image the stack was running before this deploy
+SUPERSEDED_ID="" # image :rollback pointed at before this deploy
+NEW_ID=""        # image being deployed
+state() { STATE_EMITTED="$1"; printf 'DEPLOY_STATE: %s\n' "$1"; }
 warn() { printf '\033[0;33m[deploy:warn]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[0;31m[deploy:error]\033[0m %s\n' "$*" >&2; exit 1; }
 
@@ -220,11 +224,24 @@ roll_back() {
 }
 
 # Reports the retained backup on any non-zero exit; never changes the exit code.
+# Drops the image that :rollback pointed at BEFORE this run. Runs on success and on
+# failure — otherwise a failed deploy leaves it dangling and untagged forever.
+cleanup_superseded_image() {
+    if [ -z "${SUPERSEDED_ID:-}" ]; then return 0; fi
+    if [ "$SUPERSEDED_ID" = "${PREVIOUS_ID:-}" ]; then return 0; fi
+    if [ "$SUPERSEDED_ID" = "${NEW_ID:-}" ]; then return 0; fi
+    remove_own_image "$SUPERSEDED_ID"
+}
+
 on_exit() {
     local rc=$?
+    cleanup_superseded_image || true
     [ "$rc" -eq 0 ] && return 0
+    # A more specific state (rolled-back / rollback-failed) always wins.
+    [ -n "$STATE_EMITTED" ] && return 0
     if [ -n "${BACKUP_FILE:-}" ] && [ -f "${BACKUP_FILE:-}" ]; then
         warn "pre-deploy backup KEPT at ${BACKUP_FILE}"
+        state "failed-backup-kept"
     else
         state "aborted-before-change"
     fi
@@ -257,13 +274,12 @@ main() {
     prune_stale_backups
     create_backup
 
-    local previous_id superseded_id
-    previous_id="$(image_id_of_container "$APP_CONTAINER")"
-    superseded_id="$(image_id_of_tag "${IMAGE_REPO}:${ROLLBACK_TAG}")"
+    PREVIOUS_ID="$(image_id_of_container "$APP_CONTAINER")"
+    SUPERSEDED_ID="$(image_id_of_tag "${IMAGE_REPO}:${ROLLBACK_TAG}")"
 
-    if [ -n "$previous_id" ]; then
+    if [ -n "$PREVIOUS_ID" ]; then
         log "tagging current image as ${IMAGE_REPO}:${ROLLBACK_TAG}"
-        docker tag "$previous_id" "${IMAGE_REPO}:${ROLLBACK_TAG}"
+        docker tag "$PREVIOUS_ID" "${IMAGE_REPO}:${ROLLBACK_TAG}"
     fi
 
     log "pulling ${image_ref}"
@@ -272,9 +288,8 @@ main() {
     # Pin :latest to the exact digest we just built, so compose starts that image
     # and not whatever :latest happens to resolve to at pull time.
     docker tag "$image_ref" "${IMAGE_REPO}:latest"
-    local new_id
-    new_id="$(image_id_of_tag "${IMAGE_REPO}:latest")"
-    log "deploying image ${new_id}"
+    NEW_ID="$(image_id_of_tag "${IMAGE_REPO}:latest")"
+    log "deploying image ${NEW_ID}"
 
     log "restarting stack"
     if ! bring_up_stack; then
@@ -287,14 +302,11 @@ main() {
 
     discard_backup
 
-    # Keep exactly two of our images: the live one and the rollback one.
-    if [ "$superseded_id" != "$previous_id" ] && [ "$superseded_id" != "$new_id" ]; then
-        remove_own_image "$superseded_id"
-    fi
-
+    # Keeps exactly two of our images: the live one and the rollback one. The
+    # superseded one is dropped by the exit handler, on this path and on failure.
     log "deploy complete — ${image_ref}"
-    docker compose -f "$COMPOSE_FILE" ps
     state "success"
+    docker compose -f "$COMPOSE_FILE" ps || true
 }
 
 main "$@"

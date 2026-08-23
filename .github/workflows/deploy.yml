@@ -150,6 +150,7 @@ jobs:
           case "$state" in
             success)          detail="Pre-deploy database backup was taken, verified, and deleted after the health check passed." ;;
             rolled-back)      detail="Health check failed. The stack was **rolled back** to the previous image and the pre-deploy backup was **kept** under \`/root/shoppinglist/backups/\`." ;;
+            failed-backup-kept) detail="The deploy failed after the backup was taken. The pre-deploy backup was **kept** under \`/root/shoppinglist/backups/\`. Check the job log — the stack may still be on the previous image." ;;
             rollback-failed)  detail="Health check failed and the rollback did **not** recover the stack — manual intervention required. The pre-deploy backup was **kept** under \`/root/shoppinglist/backups/\`." ;;
             aborted-before-change) detail="The deploy aborted before anything on the server was changed. Production is untouched." ;;
             *)                detail="The deploy script did not report an outcome — it may not have started (SSH or upload failure). Check the job log before assuming production changed." ;;
