@@ -24,3 +24,5 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+.playwright-mcp/
+/.claude

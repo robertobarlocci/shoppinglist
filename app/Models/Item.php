@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $name
  * @property int $quantity
  * @property int|null $category_id
+ * @property bool $category_is_explicit
  * @property ListType $list_type
  * @property int|null $recurring_source_id
  * @property string|null $deleted_from
@@ -61,6 +62,7 @@ final class Item extends Model
         'name',
         'quantity',
         'category_id',
+        'category_is_explicit',
         'list_type',
         'recurring_source_id',
         'deleted_from',
@@ -223,6 +225,7 @@ final class Item extends Model
     {
         return [
             'list_type' => ListType::class,
+            'category_is_explicit' => 'boolean',
             'moved_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];

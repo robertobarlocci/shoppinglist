@@ -145,9 +145,10 @@
             />
 
             <!-- Category selector for new items -->
-            <div v-if="canAddNewItem" class="flex gap-2">
+            <div v-if="showNewItemForm" class="flex gap-2">
               <select
                 v-model="selectedCategoryForNewItem"
+                @change="categoryTouchedByUser = true"
                 class="input flex-1"
               >
                 <option v-for="category in categories" :key="category.id" :value="category.id">
@@ -176,13 +177,17 @@
             </div>
           </div>
 
-          <!-- Add new button -->
+          <!-- Add new button. Disabled while suggestions for the current input are still in
+               flight, so a fast click can no longer create a duplicate under the default
+               category before the real one is known (issue #2). -->
           <button
-            v-if="canAddNewItem"
+            v-if="showNewItemForm"
             @click="addNewItem"
-            class="mt-2 w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
+            :disabled="isSearching"
+            class="mt-2 w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            ➕ "{{ searchQuery }}" als neuen Artikel hinzufügen
+            <span v-if="isSearching">Suche läuft …</span>
+            <span v-else>➕ "{{ searchQuery }}" als neuen Artikel hinzufügen</span>
           </button>
         </section>
 
@@ -406,7 +411,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import { useItemsStore } from '../Stores/items';
 import { useToast } from '../Composables/useToast';
@@ -427,6 +432,11 @@ const searchQuery = ref('');
 const quickBuyInput = ref('');
 const suggestions = ref([]);
 const selectedCategoryForNewItem = ref(null);
+// Issue #2: true only once the user has actively changed the dropdown for the current input.
+// Until then the autocomplete is free to pre-fill it with the category the typed name already has.
+const categoryTouchedByUser = ref(false);
+// True from the moment the input changes until the debounced suggestion request has resolved.
+const isSearching = ref(false);
 const editingItem = ref(null);
 const editForm = ref({
   name: '',
@@ -482,11 +492,45 @@ const canAddNewItem = computed(() => {
   return searchQuery.value.length > 0 && !hasExactMatch.value;
 });
 
+// The form stays visible while a search is in flight so the layout does not jump; the button
+// itself is disabled instead (issue #2 — clicking during the debounce created a duplicate
+// carrying the default category).
+const showNewItemForm = computed(() => {
+  return canAddNewItem.value || (searchQuery.value.length > 0 && isSearching.value);
+});
+
+// The category the typed name already has, taken from the matching suggestion.
+const knownCategoryIdForQuery = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  if (!query) return null;
+
+  const match = suggestions.value.find(item => item.name.toLowerCase() === query);
+  return match?.category?.id ?? null;
+});
+
+const defaultCategoryId = () => {
+  const defaultCategory = props.categories.find(c => c.slug === 'other') || props.categories[0];
+  return defaultCategory?.id ?? null;
+};
+
+// Issue #2: the dropdown used to keep whatever the user last picked, so every following item
+// silently inherited an unrelated category. It is reset after each successful add.
+const resetNewItemCategory = () => {
+  selectedCategoryForNewItem.value = defaultCategoryId();
+  categoryTouchedByUser.value = false;
+};
+
+// Issue #2: the suggestion list already knows the category of the typed name — pre-select it,
+// unless the user has deliberately chosen something else for this input.
+watch(knownCategoryIdForQuery, (categoryId) => {
+  if (categoryId && !categoryTouchedByUser.value) {
+    selectedCategoryForNewItem.value = categoryId;
+  }
+});
+
 onMounted(() => {
   itemsStore.fetchItems();
-  // Set default category to "other"
-  const defaultCategory = props.categories.find(c => c.slug === 'other') || props.categories[0];
-  selectedCategoryForNewItem.value = defaultCategory?.id;
+  resetNewItemCategory();
 });
 
 // Helper function to get category color
@@ -534,15 +578,35 @@ const saveEdit = async () => {
 };
 
 let searchTimeout = null;
+let searchRequestId = 0;
 const handleSearch = async () => {
+  // A new keystroke invalidates any category the user picked for the previous input.
+  categoryTouchedByUser.value = false;
+  clearTimeout(searchTimeout);
+
   if (searchQuery.value.length < 2) {
     suggestions.value = [];
+    isSearching.value = false;
     return;
   }
 
-  clearTimeout(searchTimeout);
+  // Issue #2: mark the search as in flight IMMEDIATELY, not when the debounce fires, so the
+  // "add new" button is unclickable for the whole window in which we do not yet know the
+  // item's real category.
+  isSearching.value = true;
+  const requestId = ++searchRequestId;
+
   searchTimeout = setTimeout(async () => {
-    suggestions.value = await itemsStore.searchInventory(searchQuery.value);
+    try {
+      const results = await itemsStore.searchInventory(searchQuery.value);
+      // Ignore a response that a later keystroke has already superseded.
+      if (requestId !== searchRequestId) return;
+      suggestions.value = results;
+    } catch (err) {
+      if (requestId === searchRequestId) suggestions.value = [];
+    } finally {
+      if (requestId === searchRequestId) isSearching.value = false;
+    }
   }, 300);
 };
 
@@ -561,13 +625,12 @@ const addQuickBuy = async () => {
       return;
     }
 
-    // Find 'other' category or use first available category as fallback
-    const categoryId = props.categories.find(c => c.slug === 'other')?.id || props.categories[0]?.id;
-
+    // Issue #2: no category is sent. The server inherits the one this item name already has
+    // and only falls back to "Sonstiges" for a genuinely new name — hardcoding 'other' here
+    // was what made every Quick Buy item reset its category on check-off.
     await itemsStore.createItem({
-      name: quickBuyInput.value,
+      name: quickBuyInput.value.trim(),
       list_type: 'quick_buy',
-      category_id: categoryId,
     });
     success(`"${quickBuyInput.value}" zu Quick Buy hinzugefügt`);
     quickBuyInput.value = '';
@@ -587,18 +650,27 @@ const addNewItem = async () => {
       error(`"${searchQuery.value}" ist bereits auf der Einkaufsliste`);
       searchQuery.value = '';
       suggestions.value = [];
+      isSearching.value = false;
+      resetNewItemCategory();
       return;
     }
 
-    // Use selected category
-    await itemsStore.createItem({
-      name: searchQuery.value,
-      list_type: 'to_buy',
-      category_id: selectedCategoryForNewItem.value,
-    });
-    success(`"${searchQuery.value}" hinzugefügt`);
+    const name = searchQuery.value.trim();
+
+    // Issue #2: only send a category the user ACTIVELY chose. When the dropdown was never
+    // touched it is merely showing a default, and sending it would tell the server "the user
+    // picked Sonstiges" — the server instead inherits the category this item name already has.
+    const payload = { name, list_type: 'to_buy' };
+    if (categoryTouchedByUser.value) {
+      payload.category_id = selectedCategoryForNewItem.value;
+    }
+
+    await itemsStore.createItem(payload);
+    success(`"${name}" hinzugefügt`);
     searchQuery.value = '';
     suggestions.value = [];
+    isSearching.value = false;
+    resetNewItemCategory();
   } catch (err) {
     error('Fehler beim Hinzufügen');
   }
@@ -621,6 +693,8 @@ const handleSuggestionClick = async (item) => {
       success(`"${item.name}" zur Einkaufsliste verschoben`);
       searchQuery.value = '';
       suggestions.value = [];
+      isSearching.value = false;
+      resetNewItemCategory();
     }
   } catch (err) {
     error('Fehler beim Verschieben');
