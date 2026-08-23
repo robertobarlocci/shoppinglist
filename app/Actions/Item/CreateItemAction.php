@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace App\Actions\Item;
 
-use App\Models\Category;
 use App\Models\Item;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\ItemCategoryResolver;
 use Illuminate\Support\Facades\DB;
 
 final class CreateItemAction
 {
     public function __construct(
         private readonly ActivityLogger $activityLogger,
+        private readonly ItemCategoryResolver $categoryResolver,
     ) {}
 
     /**
@@ -24,13 +25,19 @@ final class CreateItemAction
     public function execute(array $data, User $user): Item
     {
         return DB::transaction(function () use ($data, $user): Item {
-            // Get default category if none provided
-            $categoryId = $data['category_id'] ?? $this->getDefaultCategoryId();
+            // Issue #2: a name that already has a curated category inherits it instead of
+            // falling back to "Sonstiges". Only a category the caller actually supplied — and
+            // that is not the catch-all default — counts as an explicit user choice.
+            [$categoryId, $categoryIsExplicit] = $this->categoryResolver->resolveForNewItem(
+                $data['category_id'] ?? null,
+                $data['name'],
+            );
 
             $item = Item::create([
                 'name' => $data['name'],
                 'quantity' => $data['quantity'] ?? null,
                 'category_id' => $categoryId,
+                'category_is_explicit' => $categoryIsExplicit,
                 'list_type' => $data['list_type'],
                 'created_by' => $user->id,
             ]);
@@ -39,11 +46,6 @@ final class CreateItemAction
 
             return $item->load(['category', 'creator']);
         });
-    }
-
-    private function getDefaultCategoryId(): ?int
-    {
-        return Category::where('slug', 'other')->first()?->id;
     }
 
     private function logActivity(Item $item, User $user): void

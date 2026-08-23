@@ -83,12 +83,18 @@ final class ItemController extends Controller
 
     /**
      * Update the specified item.
-    /**
-     * Update the specified item.
      */
     public function update(UpdateItemRequest $request, Item $item): ItemResource
     {
-        $item->update($request->validated());
+        $attributes = $request->validated();
+
+        // Issue #2: the edit modal is the unambiguous "I am choosing this category" gesture —
+        // including choosing "Sonstiges". Mark it so the dedup on check-off honours it.
+        if (array_key_exists('category_id', $attributes)) {
+            $attributes['category_is_explicit'] = true;
+        }
+
+        $item->update($attributes);
 
         $this->activityLogger->itemEdited($item, $request->user(), $request->validated());
 
@@ -180,14 +186,33 @@ final class ItemController extends Controller
             return response()->json([]);
         }
 
-        // Use DISTINCT at database level for better performance
+        // Issue #2: one suggestion per item NAME (case-insensitively, so "Cola" and "cola"
+        // are one item), represented by the CURATED row rather than the newest one. MAX(id)
+        // used to return the freshly created wrong-category duplicate, so the badge confirmed
+        // the corrupted value instead of the category the user actually maintains.
+        // The search term is bound and its LIKE metacharacters escaped — it used to be
+        // interpolated straight into the ILIKE pattern.
+        $pattern = '%' . addcslashes($query, '\\%_') . '%';
+
         $items = Item::select('items.*')
-            ->whereIn('id', function ($subquery) use ($query) {
-                $subquery->selectRaw('MAX(id)')
+            ->whereIn('id', function ($subquery) use ($pattern) {
+                $subquery->selectRaw('DISTINCT ON (LOWER(name)) id')
                     ->from('items')
-                    ->where('name', 'ILIKE', "%{$query}%")
+                    ->whereRaw("name ILIKE ? ESCAPE '\\'", [$pattern])
                     ->whereNull('deleted_at')
-                    ->groupBy('name');
+                    ->orderByRaw('LOWER(name)')
+                    ->orderByRaw('CASE
+                        WHEN list_type = ? THEN 1
+                        WHEN list_type = ? THEN 2
+                        WHEN list_type = ? THEN 3
+                        ELSE 4
+                    END', [
+                        ListType::INVENTORY->value,
+                        ListType::TO_BUY->value,
+                        ListType::QUICK_BUY->value,
+                    ])
+                    ->orderByDesc('category_is_explicit')
+                    ->orderByDesc('id');
             })
             ->with('category')
             ->orderByRaw('CASE

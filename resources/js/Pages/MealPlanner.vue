@@ -548,6 +548,9 @@ const imageFileInput = ref(null);
 const newIngredientName = ref('');
 const newIngredientQuantity = ref('');
 const ingredientSuggestions = ref([]);
+// Issue #2: the id of the inventory item the user picked from the autocomplete. Sending it
+// lets the server resolve the ingredient's real category instead of defaulting to "Sonstiges".
+const newIngredientItemId = ref(null);
 let searchTimeout = null;
 
 // Helper functions
@@ -759,6 +762,10 @@ async function deleteImage() {
 
 // Ingredients
 async function handleIngredientSearch() {
+  // Typing after picking a suggestion breaks the link again — the name no longer necessarily
+  // refers to the item that was selected.
+  newIngredientItemId.value = null;
+
   if (newIngredientName.value.length < 2) {
     ingredientSuggestions.value = [];
     return;
@@ -776,14 +783,17 @@ async function handleIngredientSearch() {
 
 function selectIngredientSuggestion(suggestion) {
   newIngredientName.value = suggestion.name;
+  // Keep the link to the picked item — it carries the category (issue #2).
+  newIngredientItemId.value = suggestion.id ?? null;
   ingredientSuggestions.value = [];
 }
 
 async function addIngredient() {
   try {
     await mealPlansStore.addIngredient(selectedMeal.value.id, {
-      name: newIngredientName.value,
+      name: newIngredientName.value.trim(),
       quantity: newIngredientQuantity.value || null,
+      item_id: newIngredientItemId.value,
     });
 
     // Refresh the selected meal
@@ -791,6 +801,7 @@ async function addIngredient() {
 
     newIngredientName.value = '';
     newIngredientQuantity.value = '';
+    newIngredientItemId.value = null;
     success('Zutat hinzugefügt');
   } catch (err) {
     showError('Fehler beim Hinzufügen der Zutat');

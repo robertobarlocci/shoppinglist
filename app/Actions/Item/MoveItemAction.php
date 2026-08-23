@@ -95,9 +95,14 @@ final readonly class MoveItemAction
 
     private function findDuplicateInInventory(Item $item): ?Item
     {
+        // Issue #2: with more than one inventory row of the same name the survivor used to be
+        // arbitrary. Prefer the curated row (an explicitly chosen category), then the oldest,
+        // so the outcome is deterministic.
         return Item::where('list_type', ListType::INVENTORY)
-            ->whereRaw('LOWER(name) = ?', [strtolower($item->name)])
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($item->name)])
             ->where('id', '!=', $item->id)
+            ->orderByDesc('category_is_explicit')
+            ->orderBy('id')
             ->first();
     }
 
@@ -108,9 +113,16 @@ final readonly class MoveItemAction
     {
         $itemName = $item->name;
 
-        // Preserve the incoming item's category so the user's latest choice is kept
-        if ($item->category_id !== null && $item->category_id !== $existingItem->category_id) {
+        // Issue #2: the category belongs to the item NAME, so the surviving inventory row
+        // keeps its curated category. Only a category the user EXPLICITLY chose may replace
+        // it — a defaulted "Sonstiges" (or a stale dropdown value nobody touched) must not,
+        // because that overwrite is what silently corrupted the data.
+        if ($item->category_is_explicit
+            && $item->category_id !== null
+            && $item->category_id !== $existingItem->category_id
+        ) {
             $existingItem->category_id = $item->category_id;
+            $existingItem->category_is_explicit = true;
             $existingItem->save();
         }
 
