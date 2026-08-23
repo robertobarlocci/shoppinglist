@@ -1,7 +1,7 @@
 # Development Commands
 # Run `make help` to see all available commands
 
-.PHONY: help up down restart build logs shell npm-dev test lint analyse ci fresh migrate seed cache-clear
+.PHONY: help up down restart build logs shell npm-dev test test-db lint analyse ci fresh migrate seed cache-clear
 
 # Default target
 help:
@@ -20,7 +20,8 @@ help:
 	@echo "  make npm-build  - Build frontend assets"
 	@echo ""
 	@echo "Testing & Quality:"
-	@echo "  make test       - Run PHPUnit tests"
+	@echo "  make test       - Run PHPUnit tests (against chnubber_test, never the dev DB)"
+	@echo "  make test-db    - Create the test database if it is missing"
 	@echo "  make lint       - Run Pint code formatter"
 	@echo "  make analyse    - Run PHPStan analysis"
 	@echo "  make ci         - Run all CI checks"
@@ -61,10 +62,17 @@ npm-build:
 	npm run build
 
 # Testing & Quality
-test:
+
+# The suite runs against `chnubber_test` (phpunit.xml), NOT the development database.
+# Postgres only runs docker/postgres/init-test-db.sh when the data directory is first
+# initialised, so an existing volume needs this idempotent target.
+test-db:
+	@docker compose exec -T db sh -c 'psql -U "$${POSTGRES_USER}" -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='"'"'chnubber_test'"'"'" | grep -q 1 || psql -U "$${POSTGRES_USER}" -d postgres -c "CREATE DATABASE chnubber_test"'
+
+test: test-db
 	docker compose exec app php artisan test
 
-test-coverage:
+test-coverage: test-db
 	docker compose exec app php artisan test --coverage
 
 lint:

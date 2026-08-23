@@ -12,10 +12,15 @@ services:
     networks:
       - shoppinglist-network
     environment:
-      - DB_CONNECTION=pgsql
+      # DB_CONNECTION and DB_DATABASE are deliberately NOT set here. A real environment
+      # variable takes precedence over phpunit.xml's <env> entries (which are not forced),
+      # so injecting them made `php artisan test` run against the DEVELOPMENT database and
+      # truncate it on every RefreshDatabase run. They come from .env instead, which Laravel
+      # loads with safeLoad() and therefore never overrides phpunit's test values.
+      # Do not add them back — and do not "fix" this with force="true" in phpunit.xml, which
+      # would break CI: the Tests job sets DB_DATABASE=test on purpose for its own service.
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_DATABASE=${DB_DATABASE:-shoppinglist}
       - DB_USERNAME=${DB_USERNAME:-shoppinglist}
       - DB_PASSWORD=${DB_PASSWORD:-secret}
       - REDIS_HOST=redis
@@ -62,6 +67,7 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh:ro
     ports:
       - "54321:5432"
     networks:
