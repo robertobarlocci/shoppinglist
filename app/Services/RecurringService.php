@@ -27,6 +27,7 @@ final class RecurringService
             ->filter(fn ($schedule) => $schedule->shouldTriggerToday());
 
         foreach ($schedules as $schedule) {
+            /** @var Item $sourceItem */
             $sourceItem = $schedule->item;
 
             // Create new item in shopping list
@@ -34,6 +35,9 @@ final class RecurringService
                 'name' => $sourceItem->name,
                 'quantity' => $sourceItem->quantity,
                 'category_id' => $sourceItem->category_id,
+                // Issue #2: a recurring item is a copy of a curated row, so it carries the
+                // source row's explicitness rather than looking like an unchosen default.
+                'category_is_explicit' => $sourceItem->category_is_explicit,
                 'list_type' => Item::LIST_TYPE_TO_BUY,
                 'recurring_source_id' => $sourceItem->id,
                 'created_by' => $sourceItem->created_by,

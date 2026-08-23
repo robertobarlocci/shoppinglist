@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions\MealPlan;
 
-use App\Models\Category;
 use App\Models\Item;
 use App\Models\MealPlan;
 use App\Models\User;
+use App\Services\ItemCategoryResolver;
 use Illuminate\Support\Facades\DB;
 
 final class AddIngredientsToShoppingListAction
 {
+    public function __construct(
+        private readonly ItemCategoryResolver $categoryResolver,
+    ) {}
+
     /**
      * Add all ingredients from a meal plan to the shopping list.
      *
@@ -41,7 +45,9 @@ final class AddIngredientsToShoppingListAction
 
     private function itemExistsInShoppingList(string $name): bool
     {
-        return Item::where('name', $name)
+        // Issue #2: match the same way dedup and suggest do, so "Cola" and "cola" are one
+        // item instead of two rows that later merge with an arbitrary survivor.
+        return Item::whereRaw('LOWER(name) = ?', [mb_strtolower(trim($name))])
             ->where('list_type', Item::LIST_TYPE_TO_BUY)
             ->whereNull('deleted_at')
             ->exists();
@@ -55,6 +61,8 @@ final class AddIngredientsToShoppingListAction
             'name' => $ingredient->name,
             'quantity' => $ingredient->quantity,
             'category_id' => $categoryId,
+            // Derived from the linked item / the name's history — nobody chose it here.
+            'category_is_explicit' => false,
             'list_type' => Item::LIST_TYPE_TO_BUY,
             'created_by' => $user->id,
         ]);
@@ -69,6 +77,9 @@ final class AddIngredientsToShoppingListAction
             }
         }
 
-        return Category::where('slug', 'other')->first()?->id;
+        // Issue #2: an ingredient typed by hand (or added before the UI sent item_id) still
+        // knows its category if that name has one — only then fall back to "Sonstiges".
+        return $this->categoryResolver->inheritedCategoryIdForName($ingredient->name)
+            ?? $this->categoryResolver->defaultCategoryId();
     }
 }

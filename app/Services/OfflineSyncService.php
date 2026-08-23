@@ -16,6 +16,7 @@ final class OfflineSyncService
     public function __construct(
         private ActivityLogger $activityLogger,
         private MoveItemAction $moveItemAction,
+        private ItemCategoryResolver $categoryResolver,
     ) {}
 
     /**
@@ -121,10 +122,18 @@ final class OfflineSyncService
      */
     private function handleCreateItem(array $data, User $user, ?string $clientTimestamp): array
     {
+        // Issue #2: resolve the category exactly like the online path — inherit it from the
+        // item name when the client did not send one, instead of storing null/"Sonstiges".
+        [$categoryId, $categoryIsExplicit] = $this->categoryResolver->resolveForNewItem(
+            $data['category_id'] ?? null,
+            $data['name'],
+        );
+
         $item = Item::create([
             'name' => $data['name'],
             'quantity' => $data['quantity'] ?? null,
-            'category_id' => $data['category_id'] ?? null,
+            'category_id' => $categoryId,
+            'category_is_explicit' => $categoryIsExplicit,
             'list_type' => $data['list_type'],
             'created_by' => $user->id,
         ]);
@@ -173,6 +182,9 @@ final class OfflineSyncService
             'name' => $data['name'] ?? $item->name,
             'quantity' => $data['quantity'] ?? $item->quantity,
             'category_id' => $data['category_id'] ?? $item->category_id,
+            // Issue #2: an offline edit that carries a category is a deliberate user choice,
+            // same as the edit modal online.
+            'category_is_explicit' => isset($data['category_id']) ? true : $item->category_is_explicit,
         ]);
 
         $this->activityLogger->itemEdited($item, $user);
