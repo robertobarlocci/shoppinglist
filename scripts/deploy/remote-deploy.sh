@@ -40,6 +40,8 @@ BACKUP_PREFIX="pre-deploy"
 
 # --------------------------------------------------------------------- helpers
 log()  { printf '\033[0;36m[deploy]\033[0m %s\n' "$*"; }
+# Machine-readable outcome marker consumed by the GitHub Actions summary step.
+state() { printf 'DEPLOY_STATE: %s\n' "$1"; }
 warn() { printf '\033[0;33m[deploy:warn]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[0;31m[deploy:error]\033[0m %s\n' "$*" >&2; exit 1; }
 
@@ -52,7 +54,15 @@ require_container() {
 env_value() {
     local key="$1" file="${APP_DIR}/.env"
     [ -r "$file" ] || die "cannot read ${file}"
-    sed -n "s/^${key}=//p" "$file" | head -n1 | tr -d '\r' | sed 's/^"\(.*\)"$/\1/'
+    # Single process: a `sed | head` pipeline can SIGPIPE and trip `pipefail`.
+    awk -F= -v k="$key" '
+        $1 == k {
+            sub(/^[^=]*=/, "")
+            gsub(/\r/, "")
+            gsub(/^"|"$/, "")
+            print
+            exit
+        }' "$file"
 }
 
 image_id_of_container() {
@@ -69,7 +79,11 @@ remove_own_image() {
     [ -n "$id" ] || return 0
 
     # Never remove an image that is still referenced by a running/stopped container.
-    if docker ps -aq | xargs -r docker inspect --format '{{.Image}}' 2>/dev/null | grep -qx "$id"; then
+    # Collected into a variable first: `grep -q` exits early, which would SIGPIPE the
+    # upstream command and, under `pipefail`, look like "no match".
+    local in_use
+    in_use="$(docker ps -aq | xargs -r docker inspect --format '{{.Image}}' 2>/dev/null || true)"
+    if printf '%s\n' "$in_use" | grep -qx "$id"; then
         return 0
     fi
 
@@ -184,8 +198,9 @@ health_check() {
 }
 
 bring_up_stack() {
-    # Only services declared in this compose file are touched.
-    docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+    # Only services declared in this compose file are touched. No --remove-orphans:
+    # this host runs other stacks and we never want to remove anything we did not declare.
+    docker compose -f "$COMPOSE_FILE" up -d
 }
 
 roll_back() {
@@ -204,9 +219,35 @@ roll_back() {
     return 1
 }
 
+# Reports the retained backup on any non-zero exit; never changes the exit code.
+on_exit() {
+    local rc=$?
+    [ "$rc" -eq 0 ] && return 0
+    if [ -n "${BACKUP_FILE:-}" ] && [ -f "${BACKUP_FILE:-}" ]; then
+        warn "pre-deploy backup KEPT at ${BACKUP_FILE}"
+    else
+        state "aborted-before-change"
+    fi
+    return 0
+}
+
+# Health check failed or the stack would not come up: roll back, keep the backup.
+fail_and_roll_back() {
+    local reason="$1"
+    warn "$reason"
+    docker compose -f "$COMPOSE_FILE" logs --tail=60 app nginx || true
+    if roll_back; then
+        state "rolled-back"
+    else
+        state "rollback-failed"
+    fi
+    die "deploy failed — ${reason}"
+}
+
 main() {
     local image_ref="${1:-}"
 
+    trap on_exit EXIT
     preflight "$image_ref"
     cd "$APP_DIR"
 
@@ -236,13 +277,12 @@ main() {
     log "deploying image ${new_id}"
 
     log "restarting stack"
-    bring_up_stack
+    if ! bring_up_stack; then
+        fail_and_roll_back "docker compose could not bring the stack up"
+    fi
 
     if ! health_check; then
-        warn "health check failed after ${HEALTH_RETRIES} attempts"
-        docker compose -f "$COMPOSE_FILE" logs --tail=60 app nginx || true
-        roll_back || true
-        die "deploy failed — backup KEPT at ${BACKUP_FILE}"
+        fail_and_roll_back "health check failed after ${HEALTH_RETRIES} attempts"
     fi
 
     discard_backup
@@ -254,6 +294,7 @@ main() {
 
     log "deploy complete — ${image_ref}"
     docker compose -f "$COMPOSE_FILE" ps
+    state "success"
 }
 
 main "$@"

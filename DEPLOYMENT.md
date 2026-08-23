@@ -85,9 +85,10 @@ docker exec -i chnubber-db pg_restore -U shoppinglist -d shoppinglist --clean --
   < /root/shoppinglist/backups/pre-deploy_<timestamp>.dump
 ```
 
-> **Server layout note:** the live stack is at `/root/shoppinglist` (`.env`,
-> `docker-compose.prod.yml`, `docker/`, `backups/`). Older sections below refer to
-> `/opt/shoppinglist`; treat `/root/shoppinglist` as authoritative.
+> **Server layout:** the live stack lives at `/root/shoppinglist` — `.env`,
+> `docker-compose.prod.yml`, `docker/` and `backups/`. This is what
+> `remote-deploy.sh` defaults to via `APP_DIR`; point `APP_DIR` elsewhere if the
+> stack ever moves.
 
 ## �📁 Data Storage Architecture
 
@@ -99,9 +100,9 @@ docker exec -i chnubber-db pg_restore -U shoppinglist -d shoppinglist --clean --
 ├── shoppinglist_redis-data/      # Redis cache (PERSISTENT)
 └── shoppinglist_storage-data/    # Laravel uploads/logs (PERSISTENT)
 
-/opt/shoppinglist/                # Recommended application location
+/root/shoppinglist/               # Application location (compose + .env)
 ├── .env                          # Environment config (PERSISTENT - NEVER in Git)
-├── docker-compose.yml            # Container orchestration
+├── docker-compose.prod.yml       # Container orchestration
 ├── docker/                       # Docker configs
 └── backups/                      # Database backups
 ```
@@ -115,7 +116,7 @@ docker exec -i chnubber-db pg_restore -U shoppinglist -d shoppinglist --clean --
 - **Lost if**: You run `docker-compose down -v` (volumes flag)
 
 ### 2. **Environment File** (.env)
-- **Location**: `/opt/shoppinglist/.env` (on host filesystem)
+- **Location**: `/root/shoppinglist/.env` (on host filesystem)
 - **Contains**: APP_KEY, database passwords, session secrets
 - **Mounted into**: Container as read-only
 - **NEVER commit to Git**
@@ -129,8 +130,8 @@ docker exec -i chnubber-db pg_restore -U shoppinglist -d shoppinglist --clean --
 
 ### 1. Create application directory
 ```bash
-sudo mkdir -p /opt/shoppinglist
-cd /opt/shoppinglist
+mkdir -p /root/shoppinglist
+cd /root/shoppinglist
 ```
 
 ### 2. Clone the repository
@@ -177,13 +178,15 @@ git commit -m "Your changes"
 git push origin main
 ```
 
-GitHub Actions will automatically build, push, and deploy the new version.
+GitHub Actions runs CI, and only when every job is green it builds the image,
+backs up the database, deploys, health-checks, and deletes the backup again.
+See **Automated Pipeline** at the top of this document.
 
 ### Option 2: Manual Update Process
 
 ```bash
 # 1. Navigate to application directory
-cd /opt/shoppinglist
+cd /root/shoppinglist
 
 # 2. Backup database FIRST (see backup section)
 ./scripts/backup.sh
@@ -219,10 +222,10 @@ docker compose ps
 
 ### Automated Daily Backups
 
-Create `/opt/shoppinglist/scripts/backup.sh`:
+Create `/root/shoppinglist/scripts/backup.sh`:
 ```bash
 #!/bin/bash
-BACKUP_DIR="/opt/shoppinglist/backups"
+BACKUP_DIR="/root/shoppinglist/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 # Create backup directory
@@ -232,7 +235,7 @@ mkdir -p $BACKUP_DIR
 docker exec chnubber-db pg_dump -U chnubber chnubber | gzip > "$BACKUP_DIR/db_$DATE.sql.gz"
 
 # Backup .env file
-cp /opt/shoppinglist/.env "$BACKUP_DIR/env_$DATE.backup"
+cp /root/shoppinglist/.env "$BACKUP_DIR/env_$DATE.backup"
 
 # Keep only last 30 days
 find $BACKUP_DIR -name "db_*.sql.gz" -mtime +30 -delete
@@ -243,19 +246,19 @@ echo "Backup completed: $DATE"
 
 **Setup cron job:**
 ```bash
-chmod +x /opt/shoppinglist/scripts/backup.sh
+chmod +x /root/shoppinglist/scripts/backup.sh
 
 # Add to crontab (daily at 2 AM)
 crontab -e
 # Add this line:
-0 2 * * * /opt/shoppinglist/scripts/backup.sh
+0 2 * * * /root/shoppinglist/scripts/backup.sh
 ```
 
 ### Restore from Backup
 
 ```bash
 # Restore database
-gunzip -c /opt/shoppinglist/backups/db_20260103_020000.sql.gz | \
+gunzip -c /root/shoppinglist/backups/db_20260103_020000.sql.gz | \
   docker exec -i chnubber-db psql -U chnubber chnubber
 ```
 
@@ -313,8 +316,8 @@ docker exec chnubber-db psql -U chnubber -c "
 
 2. **Restrict .env permissions**
    ```bash
-   chmod 600 /opt/shoppinglist/.env
-   chown root:root /opt/shoppinglist/.env
+   chmod 600 /root/shoppinglist/.env
+   chown root:root /root/shoppinglist/.env
    ```
 
 3. **Use strong database password**
@@ -351,5 +354,5 @@ docker exec chnubber-db psql -U chnubber -c "
 
 **Your data is stored on your SSD at:**
 - `/var/lib/docker/volumes/` (Docker volumes)
-- `/opt/shoppinglist/.env` (environment file)
-- `/opt/shoppinglist/backups/` (database backups)
+- `/root/shoppinglist/.env` (environment file)
+- `/root/shoppinglist/backups/` (database backups)

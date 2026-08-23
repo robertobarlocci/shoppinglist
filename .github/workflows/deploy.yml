@@ -128,15 +128,33 @@ jobs:
             "${SERVER_USER}@${SERVER_HOST}:/usr/local/bin/shoppinglist-deploy.sh"
 
       - name: Backup, deploy and health-check
+        id: remote
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -p "$SERVER_PORT" \
             "${SERVER_USER}@${SERVER_HOST}" \
-            "chmod +x /usr/local/bin/shoppinglist-deploy.sh && /usr/local/bin/shoppinglist-deploy.sh '${IMAGE_REF}'"
+            "chmod +x /usr/local/bin/shoppinglist-deploy.sh && /usr/local/bin/shoppinglist-deploy.sh '${IMAGE_REF}'" \
+            2>&1 | tee "${RUNNER_TEMP}/deploy.log"
 
       - name: Deployment summary
         if: always()
         run: |
+          set -uo pipefail
+          # The remote script prints `DEPLOY_STATE: <state>` — only report what it
+          # actually did. If it never got to run (SSH/upload failure), say so.
+          state=""
+          if [ -f "${RUNNER_TEMP}/deploy.log" ]; then
+            state="$(sed -n 's/^DEPLOY_STATE: //p' "${RUNNER_TEMP}/deploy.log" | tail -n1)"
+          fi
+
+          case "$state" in
+            success)          detail="Pre-deploy database backup was taken, verified, and deleted after the health check passed." ;;
+            rolled-back)      detail="Health check failed. The stack was **rolled back** to the previous image and the pre-deploy backup was **kept** under \`/root/shoppinglist/backups/\`." ;;
+            rollback-failed)  detail="Health check failed and the rollback did **not** recover the stack — manual intervention required. The pre-deploy backup was **kept** under \`/root/shoppinglist/backups/\`." ;;
+            aborted-before-change) detail="The deploy aborted before anything on the server was changed. Production is untouched." ;;
+            *)                detail="The deploy script did not report an outcome — it may not have started (SSH or upload failure). Check the job log before assuming production changed." ;;
+          esac
+
           {
             echo "## Production deployment"
             echo ""
@@ -144,14 +162,10 @@ jobs:
             echo "|---|---|"
             echo "| Image | \`${IMAGE_REF}\` |"
             echo "| Commit | \`${GITHUB_SHA}\` |"
-            echo "| Result | ${{ job.status }} |"
+            echo "| Job result | ${{ job.status }} |"
+            echo "| Deploy state | \`${state:-unreported}\` |"
             echo ""
-            if [ "${{ job.status }}" = "success" ]; then
-              echo "Pre-deploy database backup was taken, verified and then deleted."
-            else
-              echo "Deploy failed: the stack was rolled back to the previous image and the"
-              echo "pre-deploy database backup was **kept** on the server under \`/root/shoppinglist/backups/\`."
-            fi
+            echo "$detail"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove SSH key
