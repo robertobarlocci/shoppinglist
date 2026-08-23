@@ -6,11 +6,12 @@ use App\Enums\UserRole;
 use App\Models\LunchboxItem;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Contracts\Console\Kernel;
 
 require __DIR__ . '/vendor/autoload.php';
 
 $app = require_once __DIR__ . '/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
 // Setup in-memory sqlite

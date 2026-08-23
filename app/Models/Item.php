@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\ListType;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,15 +24,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $recurring_source_id
  * @property string|null $deleted_from
  * @property int|null $created_by
- * @property \Carbon\Carbon|null $moved_at
- * @property \Carbon\Carbon|null $deleted_at
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
+ * @property Carbon|null $moved_at
+ * @property Carbon|null $deleted_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  * @property-read Category|null $category
  * @property-read User|null $creator
  * @property-read RecurringSchedule|null $recurringSchedule
  * @property-read Item|null $recurringSource
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Item> $recurringInstances
+ * @property-read Collection<int, Item> $recurringInstances
  */
 final class Item extends Model
 {

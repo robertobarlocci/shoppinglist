@@ -6,7 +6,9 @@ namespace App\Http\Requests\Item;
 
 use App\Enums\ListType;
 use App\Models\Item;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 final class SetRecurringRequest extends FormRequest
 {
@@ -27,7 +29,7 @@ final class SetRecurringRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -45,9 +47,9 @@ final class SetRecurringRequest extends FormRequest
     /**
      * Configure the validator instance.
      */
-    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    public function withValidator(Validator $validator): void
     {
-        $validator->after(function (\Illuminate\Validation\Validator $validator): void {
+        $validator->after(function (Validator $validator): void {
             $item = $this->route('item');
 
             if ($item instanceof Item && $item->list_type !== ListType::INVENTORY) {

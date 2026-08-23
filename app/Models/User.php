@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UserRole;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,16 +22,16 @@ use Illuminate\Notifications\Notifiable;
  * @property string|null $avatar_color
  * @property UserRole $role
  * @property int|null $parent_id
- * @property \Carbon\Carbon|null $email_verified_at
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
+ * @property Carbon|null $email_verified_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  * @property-read User|null $parent
- * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $children
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Item> $items
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Activity> $activities
- * @property-read \Illuminate\Database\Eloquent\Collection<int, MealPlan> $mealPlans
- * @property-read \Illuminate\Database\Eloquent\Collection<int, MealPlanSuggestion> $mealPlanSuggestions
- * @property-read \Illuminate\Database\Eloquent\Collection<int, LunchboxItem> $lunchboxItems
+ * @property-read Collection<int, User> $children
+ * @property-read Collection<int, Item> $items
+ * @property-read Collection<int, Activity> $activities
+ * @property-read Collection<int, MealPlan> $mealPlans
+ * @property-read Collection<int, MealPlanSuggestion> $mealPlanSuggestions
+ * @property-read Collection<int, LunchboxItem> $lunchboxItems
  */
 final class User extends Authenticatable
 {

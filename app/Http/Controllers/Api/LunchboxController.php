@@ -89,7 +89,7 @@ final class LunchboxController extends Controller
             DB::commit();
 
             // Broadcast to parent if kid has a parent
-            /** @var \App\Models\User $user */
+            /** @var User $user */
             $user = auth()->user();
             if ($user->parent_id) {
                 LunchboxItemUpdated::dispatch(
