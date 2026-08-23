@@ -1,0 +1,174 @@
+name: Deploy
+
+# Full delivery pipeline: tests -> image -> production.
+# The image is only built once every CI job is green, and the deploy job only
+# runs once the image exists.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # Never run two production deploys at once, and never cancel one mid-flight.
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # 1. All tests must pass (code style, static analysis, tests, frontend build).
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  # 2. Build and push the Docker image.
+  build:
+    name: Build & Push Image
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_ref: ${{ steps.ref.outputs.image_ref }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/php/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Resolve immutable image reference
+        id: ref
+        run: |
+          set -euo pipefail
+          digest='${{ steps.build.outputs.digest }}'
+          [ -n "$digest" ] || { echo "::error::build produced no digest"; exit 1; }
+          image_ref="${REGISTRY}/${IMAGE_NAME}@${digest}"
+          echo "image_ref=${image_ref}" >> "$GITHUB_OUTPUT"
+          echo "**Image:** \`${image_ref}\`" >> "$GITHUB_STEP_SUMMARY"
+
+  # 3. Back up the database, deploy, health-check, then delete the backup.
+  deploy:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment:
+      name: production
+      url: https://chnubber.grobiane.ch
+
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_PORT: ${{ secrets.SERVER_PORT || '22' }}
+      IMAGE_REF: ${{ needs.build.outputs.image_ref }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SERVER_KNOWN_HOSTS: ${{ secrets.SERVER_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          for var in SERVER_HOST SERVER_USER SERVER_SSH_KEY SERVER_KNOWN_HOSTS; do
+            if [ -z "${!var:-}" ]; then
+              echo "::error::required secret ${var} is not set"
+              exit 1
+            fi
+          done
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SERVER_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SERVER_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Upload deploy script
+        run: |
+          set -euo pipefail
+          scp -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -P "$SERVER_PORT" \
+            scripts/deploy/remote-deploy.sh \
+            "${SERVER_USER}@${SERVER_HOST}:/usr/local/bin/shoppinglist-deploy.sh"
+
+      - name: Backup, deploy and health-check
+        id: remote
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -p "$SERVER_PORT" \
+            "${SERVER_USER}@${SERVER_HOST}" \
+            "chmod +x /usr/local/bin/shoppinglist-deploy.sh && /usr/local/bin/shoppinglist-deploy.sh '${IMAGE_REF}'" \
+            2>&1 | tee "${RUNNER_TEMP}/deploy.log"
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          set -uo pipefail
+          # The remote script prints `DEPLOY_STATE: <state>` — only report what it
+          # actually did. If it never got to run (SSH/upload failure), say so.
+          state=""
+          if [ -f "${RUNNER_TEMP}/deploy.log" ]; then
+            state="$(sed -n 's/^DEPLOY_STATE: //p' "${RUNNER_TEMP}/deploy.log" | tail -n1)"
+          fi
+
+          case "$state" in
+            success)          detail="Pre-deploy database backup was taken, verified, and deleted after the health check passed." ;;
+            rolled-back)      detail="Health check failed. The stack was **rolled back** to the previous image and the pre-deploy backup was **kept** under \`/root/shoppinglist/backups/\`." ;;
+            failed-backup-kept) detail="The deploy failed after the backup was taken. The pre-deploy backup was **kept** under \`/root/shoppinglist/backups/\`. Check the job log — the stack may still be on the previous image." ;;
+            rollback-failed)  detail="Health check failed and the rollback did **not** recover the stack — manual intervention required. The pre-deploy backup was **kept** under \`/root/shoppinglist/backups/\`." ;;
+            aborted-before-change) detail="The deploy aborted before anything on the server was changed. Production is untouched." ;;
+            *)                detail="The deploy script did not report an outcome — it may not have started (SSH or upload failure). Check the job log before assuming production changed." ;;
+          esac
+
+          {
+            echo "## Production deployment"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Image | \`${IMAGE_REF}\` |"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Job result | ${{ job.status }} |"
+            echo "| Deploy state | \`${state:-unreported}\` |"
+            echo ""
+            echo "$detail"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key ~/.ssh/known_hosts

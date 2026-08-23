@@ -2,9 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    # main is covered by the Deploy pipeline, which calls this workflow via
+    # workflow_call — triggering here as well would run every job twice.
+    branches: [develop]
   pull_request:
     branches: [main, develop]
+  workflow_call:
 
 jobs:
   lint:
