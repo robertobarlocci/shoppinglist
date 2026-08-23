@@ -1,42 +1,93 @@
-# 🚀 Deployment Guide - Modern Best Practices
+# 🚀 Deployment Guide
 
-## � CI/CD Pipeline (Recommended)
+## ⚙️ Automated Pipeline
 
-The application now supports **automated deployment via GitHub Actions**. When you push to `main`, GitHub will:
+`.github/workflows/deploy.yml` is the single delivery pipeline. On every push to
+`main` (or a manual **Run workflow**) it runs three gated jobs:
 
-1. Build the Docker image
-2. Push it to GitHub Container Registry (ghcr.io)
-3. Deploy to your server via SSH
-
-### Setup GitHub Secrets
-
-Go to your repository **Settings → Secrets and variables → Actions** and add:
-
-| Secret Name | Description |
-|-------------|-------------|
-| `SERVER_HOST` | Your server IP or hostname |
-| `SERVER_USER` | SSH username (usually `root`) |
-| `SERVER_SSH_KEY` | Private SSH key for authentication |
-| `SERVER_PORT` | SSH port (optional, defaults to 22) |
-
-### Generate SSH Key (if needed)
-
-```bash
-# On your local machine
-ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_deploy
-
-# Copy public key to server
-ssh-copy-id -i ~/.ssh/github_deploy.pub user@your-server
-
-# Copy private key content for GitHub secret
-cat ~/.ssh/github_deploy
+```
+CI  ──►  Build & Push Image  ──►  Deploy to Production
+│         │                        │
+│         │                        ├─ back up the database (verified)
+│         │                        ├─ pull the exact image digest
+│         │                        ├─ restart the stack
+│         │                        ├─ health-check https://chnubber.grobiane.ch/up
+│         │                        └─ delete the backup  (or roll back + keep it)
+│         └─ only runs when every CI job is green
+└─ code style, static analysis, PHPUnit (PostgreSQL + Redis), frontend build
 ```
 
-### Manual Trigger
+Key properties:
 
-You can also manually trigger deployments from the GitHub Actions tab using "workflow_dispatch".
+| Property | How |
+|---|---|
+| Build only on green tests | `build` job has `needs: ci`; `ci` is `.github/workflows/ci.yml` called via `workflow_call` |
+| Deterministic deploy | The image is deployed **by digest**, not by the mutable `:latest` tag |
+| No concurrent deploys | Workflow `concurrency: deploy-production` + an `flock` on the server |
+| Backup before every deploy | `pg_dump -Fc`, size-checked and validated with `pg_restore -l` |
+| No storage creep | Backup is deleted on success; stale ones from failed runs are pruned after 7 days |
+| Automatic rollback | Previous image is kept as `:rollback` and restored if the health check fails |
+| Scoped to this app | Only the `chnubber-*` compose project and the `shoppinglist` image are touched — never a global `docker prune` |
 
----
+### Required GitHub secrets
+
+Stored on the **`production`** environment (Settings → Environments → production):
+
+| Secret | Value |
+|---|---|
+| `SERVER_HOST` | Server IP / hostname |
+| `SERVER_USER` | SSH user (`root`) |
+| `SERVER_PORT` | SSH port (`22`) |
+| `SERVER_SSH_KEY` | Private half of the dedicated `github-actions-deploy` ed25519 key |
+| `SERVER_KNOWN_HOSTS` | Pinned host key, so the runner never blindly trusts the host |
+
+Rotating the deploy key:
+
+```bash
+ssh-keygen -t ed25519 -N '' -C 'github-actions-deploy@shoppinglist' -f ./gha_deploy
+ssh-keyscan -t ed25519 <host> > ./known_hosts   # verify the fingerprint first!
+
+# On the server, replace the old line in /root/.ssh/authorized_keys:
+#   restrict,pty ssh-ed25519 AAAA... github-actions-deploy@shoppinglist
+
+gh secret set SERVER_SSH_KEY     --env production < ./gha_deploy
+gh secret set SERVER_KNOWN_HOSTS --env production < ./known_hosts
+rm -f ./gha_deploy ./known_hosts
+```
+
+### Manual / emergency deploy
+
+The same script the pipeline uses can be run directly on the server:
+
+```bash
+ssh root@<host>
+/usr/local/bin/shoppinglist-deploy.sh ghcr.io/robertobarlocci/shoppinglist@sha256:<digest>
+```
+
+It is tunable through environment variables (`APP_DIR`, `HEALTH_RETRIES`,
+`BACKUP_RETENTION_DAYS`, …) — see `scripts/deploy/remote-deploy.sh`.
+
+### Manual rollback
+
+```bash
+ssh root@<host>
+cd /root/shoppinglist
+docker tag ghcr.io/robertobarlocci/shoppinglist:rollback ghcr.io/robertobarlocci/shoppinglist:latest
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Restoring a kept backup
+
+A failed deploy leaves its verified dump in `/root/shoppinglist/backups/`:
+
+```bash
+docker exec -i chnubber-db pg_restore -U shoppinglist -d shoppinglist --clean --if-exists \
+  < /root/shoppinglist/backups/pre-deploy_<timestamp>.dump
+```
+
+> **Server layout note:** the live stack is at `/root/shoppinglist` (`.env`,
+> `docker-compose.prod.yml`, `docker/`, `backups/`). Older sections below refer to
+> `/opt/shoppinglist`; treat `/root/shoppinglist` as authoritative.
 
 ## �📁 Data Storage Architecture
 
