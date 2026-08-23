@@ -7,8 +7,10 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\User;
+use Database\Seeders\CategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
@@ -32,7 +34,7 @@ final class ItemCategoryRepairTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\CategorySeeder::class);
+        $this->seed(CategorySeeder::class);
 
         $this->user = User::factory()->create(['role' => 'parent']);
         $this->other = Category::where('slug', 'other')->firstOrFail();
@@ -87,7 +89,7 @@ final class ItemCategoryRepairTest extends TestCase
 
         $this->assertSame($this->other->id, $corrupted->fresh()->category_id);
         $this->assertFalse(
-            \Illuminate\Support\Facades\Schema::hasTable('item_category_repairs'),
+            Schema::hasTable('item_category_repairs'),
             'down() must drop its own log table.',
         );
     }

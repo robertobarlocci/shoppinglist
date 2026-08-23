@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\ActivityAction;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $subject_id
  * @property string|null $subject_name
  * @property array<string, mixed>|null $metadata
- * @property \Carbon\Carbon $created_at
+ * @property Carbon $created_at
  * @property-read User|null $user
  * @property-read string $icon
  * @property-read string $description

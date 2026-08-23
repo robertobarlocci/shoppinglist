@@ -8,6 +8,7 @@ use App\Models\Activity;
 use App\Models\Item;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use Database\Seeders\CategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +19,7 @@ final class ActivityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\CategorySeeder::class);
+        $this->seed(CategorySeeder::class);
     }
 
     public function test_activity_is_logged_when_item_is_created()

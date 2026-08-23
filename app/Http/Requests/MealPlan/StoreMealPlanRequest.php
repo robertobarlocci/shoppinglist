@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Requests\MealPlan;
 
 use App\Enums\MealType;
+use App\Models\MealPlan;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,13 +17,13 @@ final class StoreMealPlanRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('create', \App\Models\MealPlan::class) ?? false;
+        return $this->user()?->can('create', MealPlan::class) ?? false;
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

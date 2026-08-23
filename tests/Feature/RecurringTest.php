@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\RecurringSchedule;
 use App\Models\User;
 use App\Services\RecurringService;
+use Database\Seeders\CategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +19,7 @@ final class RecurringTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\CategorySeeder::class);
+        $this->seed(CategorySeeder::class);
     }
 
     public function test_can_set_recurring_schedule_on_inventory_item()

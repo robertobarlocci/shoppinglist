@@ -6,6 +6,7 @@ namespace App\QueryBuilders;
 
 use App\Enums\ListType;
 use App\Models\Item;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -189,9 +190,9 @@ final class ItemQueryBuilder
     /**
      * Get paginated results.
      *
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator<Item>
+     * @return LengthAwarePaginator<Item>
      */
-    public function paginate(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    public function paginate(int $perPage = 15): LengthAwarePaginator
     {
         return $this->query->paginate($perPage);
     }

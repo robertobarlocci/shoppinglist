@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console;
 
+use App\Jobs\CheckRecurringItems;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -15,7 +16,7 @@ final class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Check recurring items daily at 06:00
-        $schedule->job(\App\Jobs\CheckRecurringItems::class)->dailyAt('06:00');
+        $schedule->job(CheckRecurringItems::class)->dailyAt('06:00');
     }
 
     /**

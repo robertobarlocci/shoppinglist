@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Item;
 
+use App\Enums\ListType;
 use App\Models\Item;
 use App\Models\User;
 use App\Services\ActivityLogger;
@@ -50,7 +51,7 @@ final class CreateItemAction
 
     private function logActivity(Item $item, User $user): void
     {
-        if ($item->list_type === \App\Enums\ListType::QUICK_BUY) {
+        if ($item->list_type === ListType::QUICK_BUY) {
             $this->activityLogger->quickBuyAdded($item, $user);
         } else {
             $this->activityLogger->itemAdded($item, $user);
